@@ -1,0 +1,60 @@
+PODS:
+  - AriesFlutterMobileAgent (0.0.1):
+    - Flutter
+    - libindy
+    - libindy-objc (~> 1.8.2)
+  - barcode_scan (0.0.1):
+    - Flutter
+    - MTBBarcodeScanner
+    - SwiftProtobuf
+  - Flutter (1.0.0)
+  - libindy (1.16.0)
+  - libindy-objc (1.8.2)
+  - MTBBarcodeScanner (5.0.11)
+  - path_provider (0.0.1):
+    - Flutter
+  - "permission_handler (5.1.0+2)":
+    - Flutter
+  - SwiftProtobuf (1.20.3)
+
+DEPENDENCIES:
+  - AriesFlutterMobileAgent (from `.symlinks/plugins/AriesFlutterMobileAgent/ios`)
+  - barcode_scan (from `.symlinks/plugins/barcode_scan/ios`)
+  - Flutter (from `Flutter`)
+  - path_provider (from `.symlinks/plugins/path_provider/ios`)
+  - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
+
+SPEC REPOS:
+  https://github.com/CocoaPods/Specs.git:
+    - MTBBarcodeScanner
+    - SwiftProtobuf
+  https://github.com/hyperledger/indy-sdk.git:
+    - libindy
+    - libindy-objc
+
+EXTERNAL SOURCES:
+  AriesFlutterMobileAgent:
+    :path: ".symlinks/plugins/AriesFlutterMobileAgent/ios"
+  barcode_scan:
+    :path: ".symlinks/plugins/barcode_scan/ios"
+  Flutter:
+    :path: Flutter
+  path_provider:
+    :path: ".symlinks/plugins/path_provider/ios"
+  permission_handler:
+    :path: ".symlinks/plugins/permission_handler/ios"
+
+SPEC CHECKSUMS:
+  AriesFlutterMobileAgent: d318993e665b6bf46e39fbf5fecb1eb2868009ec
+  barcode_scan: a5c27959edfafaa0c771905bad0b29d6d39e4479
+  Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
+  libindy: 179f07d0e1498fab26aff37e154c017094ab76da
+  libindy-objc: f1db4dd4febe3ccca46c604001aae3636d78888f
+  MTBBarcodeScanner: f453b33c4b7dfe545d8c6484ed744d55671788cb
+  path_provider: abfe2b5c733d04e238b0d8691db0cfd63a27a93c
+  permission_handler: ccb20a9fad0ee9b1314a52b70b76b473c5f8dab0
+  SwiftProtobuf: b02b5075dcf60c9f5f403000b3b0c202a11b6ae1
+
+PODFILE CHECKSUM: 9e052d30c09885a7d3258593003a1c5c6accf48f
+
+COCOAPODS: 1.11.3
