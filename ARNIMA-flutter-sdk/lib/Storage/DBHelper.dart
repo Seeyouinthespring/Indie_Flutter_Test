@@ -105,10 +105,7 @@ class DBServices {
       _connections = Hive.box('connections');
     }
 
-    var connectionRecord =
-        new List<ConnectionData>.from(_connections.values.toList())
-            .where((element) => element.connectionId == connectionId)
-            .last;
+    var connectionRecord = new List<ConnectionData>.from(_connections.values.toList()).where((element) => element.connectionId == connectionId).last;
     return connectionRecord;
   }
 

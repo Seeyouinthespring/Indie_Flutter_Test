@@ -31,6 +31,10 @@ class ConnectWithMediatorService {
       String incomingRouterResponseString = await getStringData(url);
       var incomingRouterResponse =  jsonDecode(utf8.decode(base64.decode(base64.normalize(incomingRouterResponseString.split('=')[1]))));
 
+      print('INCOMING ROUTE RESPONSE ========> ${incomingRouterResponse} ');
+
+
+
       //var incomingRouterResponse = jsonDecode(await getData(url)); // how it can work
 
       var user = await DBServices.getWalletData();
@@ -44,6 +48,7 @@ class ConnectWithMediatorService {
           user.masterSecretId,
           incomingRouterResponse['serviceEndpoint'],
           incomingRouterResponse['routingKeys'],
+          "",
         ),
       );
       var createPoolResponse = await Pool.createPool(poolConfig);

@@ -3,11 +3,11 @@ class MessageType {
       "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/invitation";
   // static const String ConnectionRequest =
   //     "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request";
-  static const String ConnectionRequest = 'https://didcomm.org/connections/1.0/request';
-  static const String ConnectionResponse =
-      "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/response";
-  static const String TrustPingMessage =
-      "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping";
+  // static const String ConnectionResponse =
+  //     "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/response";
+  // static const String TrustPingMessage =
+  //     "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping";
+  //static const String MessagePickup = "https://didcomm.org/messagepickup/1.0/batch-pickup";
   static const String TrustPingResponseMessage =
       "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping_response";
   static const String ForwardMessage =
@@ -36,4 +36,12 @@ class MessageType {
       "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basicmessage/1.0/message";
   static const String CredentialPreview =
       "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview";
+
+
+
+  static const String ConnectionResponse = 'https://didcomm.org/connections/1.0/response';
+  static const String ConnectionRequest = 'https://didcomm.org/connections/1.0/request';
+  static const String BatchMessage = "https://didcomm.org/messagepickup/1.0/batch";
+  static const String BatchPickupMessage = "https://didcomm.org/messagepickup/1.0/batch-pickup";
+  static const String TrustPingMessage = "https://didcomm.org/trust_ping/1.0/ping";
 }

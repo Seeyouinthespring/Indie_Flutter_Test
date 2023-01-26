@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:AriesFlutterMobileAgent/AriesAgent.dart';
+import 'package:AriesFlutterMobileAgent/NetworkServices/Network.dart';
 import 'package:flutter/material.dart';
 import 'package:indie_demo/helpers/helpers.dart';
 import 'package:progress_dialog/progress_dialog.dart';
@@ -17,6 +18,10 @@ class ConnectMediatorScreen extends StatefulWidget {
 class _ConnectMediatorScreenState extends State<ConnectMediatorScreen> {
   ProgressDialog progressIndicator;
   String _status = "";
+
+  Future<void> aaa() async {
+    await getStringData("$MediatorAgentUrl/connection/init");
+  }
 
   Future<void> connectWithMediator() async {
     try {
@@ -45,7 +50,13 @@ class _ConnectMediatorScreenState extends State<ConnectMediatorScreen> {
 
       print('MEDIATOR => $invitation');
 
+
+
+
       if (invitation.isNotEmpty) {
+
+        AriesFlutterMobileAgent.initPolling();
+
         print('CONNECTED');
         this.setState(() {
           _status = "Connected";
@@ -84,6 +95,19 @@ class _ConnectMediatorScreenState extends State<ConnectMediatorScreen> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
+          RaisedButton(
+            color: Colors.green,
+            onPressed: () async {
+              await aaa();
+            },
+            child: Text(
+              'Call request (trigger permissions)',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+              ),
+            ),
+          ),
           Center(
             child: Container(
               margin: EdgeInsets.symmetric(

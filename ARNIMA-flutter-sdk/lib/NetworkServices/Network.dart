@@ -36,6 +36,7 @@ Future<String> getStringData(String url) async {
     String data = response.body;
     return data;
   } catch (exception) {
+
     throw exception;
   }
 }
@@ -70,11 +71,11 @@ Future<dynamic> outboundAgentMessagePost(
 ) async {
   try {
 
-    print('AGENT POST MESSAGE DETAILS');
-    print('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
-    print('URL => $url');
-    print('BODY => $apiBody');
-    print('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv');
+    // print('AGENT POST MESSAGE DETAILS');
+    // print('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^');
+    // print('URL => $url');
+    // print('BODY => $apiBody');
+    // print('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv');
 
 
     final response = await http.post(
@@ -87,9 +88,9 @@ Future<dynamic> outboundAgentMessagePost(
     );
 
 
-    print('RESPONSE status code => ${response.statusCode}');
-    print('RESPONSE BODY bytes => ${response.bodyBytes}');
-    print('RESPONSE BODY string => ${response.body}');
+    //print('RESPONSE status code => ${response.statusCode}');
+    //print('RESPONSE BODY bytes => ${response.bodyBytes}');
+    //print('RESPONSE BODY string => ${response.body}');
 
     return response;
   } catch (exception) {

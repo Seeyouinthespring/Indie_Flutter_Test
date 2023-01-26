@@ -4,9 +4,11 @@
 */
 import 'dart:async';
 import 'dart:convert';
+import 'package:AriesFlutterMobileAgent/NetworkServices/Network.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/Connection/ConnectionInterface.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/Connection/ConnectionService.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/Credential/CredentialService.dart';
+import 'package:AriesFlutterMobileAgent/Protocols/Message/MessageService.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/Presentation/PresentationService.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/TrustPing/TrustPingService.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/Wallet/WalletService.dart';
@@ -22,12 +24,14 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 StreamController<String> controller = StreamController<String>();
 EventEmitter emitterAriesSdk = new EventEmitter();
+Timer _timer;
 
 class AriesFlutterMobileAgent {
   static Future<void> init() async {
     try {
       await Hive.initFlutter();
-      final appDocumentDirectory = await path_provider.getApplicationDocumentsDirectory();
+      final appDocumentDirectory =
+          await path_provider.getApplicationDocumentsDirectory();
       Hive.init(appDocumentDirectory.path);
       Hive.registerAdapter(WalletDataAdapter());
       Hive.registerAdapter(ConnectionDataAdapter());
@@ -333,28 +337,36 @@ class AriesFlutterMobileAgent {
                     jsonDecode(message['message']);
                 switch (messageValues['@type']) {
                   case MessageType.ConnectionResponse:
-                    connectionRsponseType(user, message, dbMessages, i);
+                    connectionRsponseType(user, message,
+                        dbMessages: dbMessages, i: i);
                     break;
                   case MessageType.ConnectionRequest:
-                    connectionRequestType(user, message, dbMessages, i);
+                    connectionRequestType(user, message,
+                        dbMessages: dbMessages, i: i);
                     break;
                   case MessageType.TrustPingMessage:
-                    trustPingMessageType(user, message, dbMessages, i);
+                    trustPingMessageType(user, message,
+                        dbMessages: dbMessages, i: i);
                     break;
                   case MessageType.TrustPingResponseMessage:
-                    trustPingMessageResponseType(user, message, dbMessages, i);
+                    trustPingMessageResponseType(user, message,
+                        dbMessages: dbMessages, i: i);
                     break;
                   case MessageType.OfferCredential:
-                    offerCredentialType(user, message, dbMessages, i);
+                    offerCredentialType(user, message,
+                        dbMessages: dbMessages, i: i);
                     break;
                   case MessageType.IssueCredential:
-                    issueCredentialType(user, message, dbMessages, i);
+                    issueCredentialType(user, message,
+                        dbMessages: dbMessages, i: i);
                     break;
                   case MessageType.RequestPresentation:
-                    requestPresentationType(user, message, dbMessages, i);
+                    requestPresentationType(user, message,
+                        dbMessages: dbMessages, i: i);
                     break;
                   case MessageType.PresentationAck:
-                    presentationAckType(user, message, dbMessages, i);
+                    presentationAckType(user, message,
+                        dbMessages: dbMessages, i: i);
                     break;
                   default:
                     print('In Default Case, ${messageValues['@type']}');
@@ -399,7 +411,7 @@ class AriesFlutterMobileAgent {
   }
 
   static connectionRsponseType(WalletData user, Map<String, dynamic> message,
-      List<MessageData> dbMessages, int i) async {
+      {List<MessageData> dbMessages = const [], int i = 0}) async {
     try {
       var isCompleted = await ConnectionService.acceptResponse(
         user.walletConfig,
@@ -410,7 +422,7 @@ class AriesFlutterMobileAgent {
           senderVerkey: message['sender_verkey'],
         ),
       );
-      if (isCompleted) {
+      if (isCompleted && dbMessages.isNotEmpty) {
         await DBServices.removeMessage(dbMessages[i].messageId);
       }
     } catch (exception) {
@@ -419,7 +431,7 @@ class AriesFlutterMobileAgent {
   }
 
   static connectionRequestType(WalletData user, Map<String, dynamic> message,
-      List<MessageData> dbMessages, int i) async {
+      {List<MessageData> dbMessages = const [], int i = 0}) async {
     try {
       var isCompleted = await ConnectionService.acceptRequest(
         user.walletConfig,
@@ -439,7 +451,7 @@ class AriesFlutterMobileAgent {
   }
 
   static trustPingMessageType(WalletData user, Map<String, dynamic> message,
-      List<MessageData> dbMessages, int i) async {
+      {List<MessageData> dbMessages = const [], int i = 0}) async {
     try {
       Connection connection = await TrustPingService.processPing(
         user.walletConfig,
@@ -458,8 +470,9 @@ class AriesFlutterMobileAgent {
     }
   }
 
-  static trustPingMessageResponseType(WalletData user,
-      Map<String, dynamic> message, List<MessageData> dbMessages, int i) async {
+  static trustPingMessageResponseType(
+      WalletData user, Map<String, dynamic> message,
+      {List<MessageData> dbMessages = const [], int i = 0}) async {
     var connection = await TrustPingService.saveTrustPingResponse(
       InboundMessage(
         message: message['message'],
@@ -475,7 +488,7 @@ class AriesFlutterMobileAgent {
   }
 
   static presentationAckType(WalletData user, Map<String, dynamic> message,
-      List<MessageData> dbMessages, int i) async {
+      {List<MessageData> dbMessages = const [], int i = 0}) async {
     try {
       await DBServices.removeMessage(dbMessages[i].messageId);
     } catch (exception) {
@@ -484,7 +497,7 @@ class AriesFlutterMobileAgent {
   }
 
   static requestPresentationType(WalletData user, Map<String, dynamic> message,
-      List<MessageData> dbMessages, int i) async {
+      {List<MessageData> dbMessages = const [], int i = 0}) async {
     var connection = await PresentationService.receivePresentProofRequest(
       dbMessages[i].messageId,
       InboundMessage(
@@ -498,7 +511,7 @@ class AriesFlutterMobileAgent {
   }
 
   static issueCredentialType(WalletData user, Map<String, dynamic> message,
-      List<MessageData> dbMessages, int i) async {
+      {List<MessageData> dbMessages = const [], int i = 0}) async {
     bool isCompleted = await CredentialService.storeCredential(
       InboundMessage(
         message: message['message'],
@@ -512,7 +525,7 @@ class AriesFlutterMobileAgent {
   }
 
   static offerCredentialType(WalletData user, Map<String, dynamic> message,
-      List<MessageData> dbMessages, int i) async {
+      {List<MessageData> dbMessages = const [], int i = 0}) async {
     var connection = await CredentialService.receiveCredential(
       dbMessages[i].messageId,
       InboundMessage(
@@ -523,5 +536,106 @@ class AriesFlutterMobileAgent {
     );
     emitterAriesSdk.emit("SDKEvent", null,
         "You have received credential from ${connection.theirLabel}");
+  }
+
+  static initPolling() {
+    try {
+      _timer = Timer.periodic(Duration(seconds: 20), (timer) async {
+        await pickupMessage();
+      });
+    } catch (e) {
+      print('Timer exception $e');
+    }
+  }
+
+  static Future pickupMessage() async {
+    try {
+      //WalletData user = await DBServices.getWalletData();
+
+      print('IM HERE ');
+
+      dynamic message = await MessageService.pickupMessage();
+      await handleMessage(message);
+      //return message;
+
+    } catch (exception) {
+      print("Exception in pickupMessage $exception");
+      throw exception;
+    }
+  }
+
+  static Future handleMessage(dynamic message) async {
+
+
+
+    var messageValues = new Map<String, dynamic>.from(jsonDecode(message['message']));
+    var messagesAttached = messageValues['messages~attach'] as List;
+
+    print('messageValues[@type] => ${messageValues['@type']}');
+    print('MessageType.MessagePickup => ${MessageType.BatchMessage}');
+    print('messagesAttached => ${messagesAttached}');
+
+
+    WalletData user = await DBServices.getWalletData();
+
+    if (messageValues['@type'] == MessageType.BatchMessage && messagesAttached.isEmpty){
+      print('NO MESSAGES FOR ME :( ');
+      return;
+    }
+
+    var unPackMessageResponse = await unPackMessage(
+      user.walletConfig,
+      user.walletCredentials,
+      messagesAttached
+    );
+
+    print('UNPACKED MESSAGE => $unPackMessageResponse');
+
+    //Map<String, dynamic> messageValues = jsonDecode(message['message']);
+    switch (messageValues['@type']) {
+      case MessageType.ConnectionResponse:
+
+        print('I AM IN THE CONNECTION RESPONSE handler !!!!!!!!!!!!!!!!!');
+
+        connectionRsponseType(user, message);
+        break;
+      case MessageType.ConnectionRequest:
+        connectionRequestType(user, message);
+        break;
+      case MessageType.TrustPingMessage:
+        trustPingMessageType(user, message);
+        break;
+      case MessageType.TrustPingResponseMessage:
+        trustPingMessageResponseType(user, message);
+        break;
+      case MessageType.OfferCredential:
+        offerCredentialType(user, message);
+        break;
+      case MessageType.IssueCredential:
+        issueCredentialType(user, message);
+        break;
+      case MessageType.RequestPresentation:
+        requestPresentationType(user, message);
+        break;
+      case MessageType.PresentationAck:
+        presentationAckType(user, message);
+        break;
+      case MessageType.BatchMessage:
+
+
+        print('BATCH MESSAGE HANDLING => ${messagesAttached}');
+        print('BATCH MESSAGE HANDLING => ${messagesAttached.length}');
+
+        // var unPackMessageResponse = await unPackMessage(
+        //     user.walletConfig,
+        //     user.walletCredentials,
+        //     messagesAttached;
+        // );
+
+
+        break;
+      default:
+        print('In Default Case, ${messageValues['@type']}');
+    }
   }
 }

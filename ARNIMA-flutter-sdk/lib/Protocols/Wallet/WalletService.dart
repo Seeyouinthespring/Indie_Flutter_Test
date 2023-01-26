@@ -63,6 +63,7 @@ class WalletService {
           responseOfMyDids[2],
           "",
           "",
+          "",
         );
         await DBServices.saveWalletData(walletDEtails);
       }

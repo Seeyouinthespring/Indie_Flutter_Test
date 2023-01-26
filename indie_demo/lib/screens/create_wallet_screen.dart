@@ -1,3 +1,4 @@
+import 'package:AriesFlutterMobileAgent/NetworkServices/Network.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:progress_dialog/progress_dialog.dart';
@@ -19,9 +20,13 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
   Future<void> _createWallet() async {
     List<dynamic> createWalletData;
     var arrayData;
+
+    //await getStringData("http://192.168.88.95:3000/connection/init");
+
     try {
       var permission = await CheckPermissions.requestStoragePermission();
 
+      
       print('Permission ? $permission');
 
       if (permission) {

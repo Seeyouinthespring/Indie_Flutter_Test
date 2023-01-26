@@ -99,12 +99,12 @@ dynamic unPackMessage(
 ) async {
   try {
     var unPackMessage;
+
     if (Platform.isIOS) {
-      unPackMessage =
-          await channel.invokeMethod('unpackMessage', <String, dynamic>{
+      unPackMessage = await channel.invokeMethod('unpackMessage', <String, dynamic>{
         'configJson': configJson,
         'credentialJson': credentialsJson,
-        'payload': jsonEncode(payload),
+        'payload': payload,//jsonEncode(payload),
       });
       return unPackMessage;
     } else {

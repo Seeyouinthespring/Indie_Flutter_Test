@@ -29,13 +29,14 @@ class WalletDataAdapter extends TypeAdapter<WalletData> {
       fields[5] as String,
       fields[6] as String,
       fields[7] as String,
+      fields[8] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, WalletData obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.walletConfig)
       ..writeByte(1)
@@ -51,7 +52,9 @@ class WalletDataAdapter extends TypeAdapter<WalletData> {
       ..writeByte(6)
       ..write(obj.serviceEndpoint)
       ..writeByte(7)
-      ..write(obj.routingKey);
+      ..write(obj.routingKey)
+      ..writeByte(8)
+      ..write(obj.defaultMediatorId);
   }
 
   @override

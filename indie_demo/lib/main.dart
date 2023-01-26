@@ -8,6 +8,7 @@ import 'package:indie_demo/screens/connection_detail_screen.dart';
 import 'package:indie_demo/screens/connection_screen.dart';
 import 'package:indie_demo/screens/create_wallet_screen.dart';
 import 'package:indie_demo/screens/qrcode_screen.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 Future<void> main() async {
 
@@ -27,6 +28,7 @@ class _MyAppState extends State<MyApp> {
   void isValidUser() async {
     WalletData userData = await AriesFlutterMobileAgent.getWalletData();
 
+
     print('getWalletData => ${userData?.toString() ?? 'null'}');
 
     if (userData != null) {
@@ -37,6 +39,9 @@ class _MyAppState extends State<MyApp> {
       setState(() {
         loggedIn = true;
       });
+
+      //await AriesFlutterMobileAgent.initPolling();
+
     }
   }
 

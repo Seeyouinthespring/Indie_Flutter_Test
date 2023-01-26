@@ -4,12 +4,14 @@
 */
 import 'dart:convert';
 
+import 'package:AriesFlutterMobileAgent/Agent/AriesFlutterMobileAgent.dart';
 import 'package:AriesFlutterMobileAgent/NetworkServices/Network.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/TrustPing/TrustPingMessages.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/TrustPing/TrustPingState.dart';
 import 'package:AriesFlutterMobileAgent/Storage/DBModels.dart';
 import 'package:AriesFlutterMobileAgent/Utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 
 import 'ConnectionInterface.dart';
 import 'ConnectionMessages.dart';
@@ -58,32 +60,43 @@ class ConnectionService {
     invite,
   ) async {
     try {
+
+      print('Accept invitation step 1');
+
       var user = await DBServices.getWalletData();
+      print('Accept invitation step 2');
       var invitation = jsonDecode(invite);
+      print('Accept invitation step 3');
       Connection connection = await createConnection(
         configJson,
         credentialsJson,
         didJson,
         invitation['label'],
       );
+      print('Accept invitation step 4');
       var connectionRequest = createConnectionRequestMessage(
         connection,
         user.label,
       );
+      print('Accept invitation step 5');
       connection.connection_state = ConnectionStates.REQUESTED.state;
       var outboundMessage = createOutboundMessage(
         connection,
         connectionRequest,
         invitation,
       );
+      print('Accept invitation step 6');
 
-      var outboundPackMessage =
-          await packMessage(configJson, credentialsJson, outboundMessage);
+      var outboundPackMessage = await packMessage(configJson, credentialsJson, outboundMessage);
 
-      await outboundAgentMessagePost(
+      print('Accept invitation step 7');
+
+      Response response = await outboundAgentMessagePost(
         invitation['serviceEndpoint'],
         outboundPackMessage,
       );
+
+      print('Accept invitation step 8');
 
       await DBServices.saveConnections(
         ConnectionData(
@@ -91,6 +104,43 @@ class ConnectionService {
           jsonEncode(connection),
         ),
       );
+
+
+      print('RESPONSE TO CONNECTION REQUEST => ${response.body}');
+      print('RESPONSE status code TO CONNECTION REQUEST => ${response.statusCode}');
+
+      if (response.statusCode == 204)
+        return false;
+
+
+      await DBServices.updateWalletData(
+        WalletData(
+          user.walletConfig,
+          user.walletCredentials,
+          user.label,
+          user.publicDid,
+          user.verkey,
+          user.masterSecretId,
+          user.serviceEndpoint,
+          user.routingKey,
+          connection.verkey,
+          //incomingRouterResponse['serviceEndpoint'],
+          //incomingRouterResponse['routingKeys'],
+        ),
+      );
+
+
+      var unpacked = await unPackMessage(
+        user.walletConfig,
+        user.walletCredentials,
+        response.body,
+      );
+
+      print('UNPACKED => ${jsonDecode(unpacked)}');
+
+      var b = await AriesFlutterMobileAgent.connectionRsponseType(user, jsonDecode(unpacked));
+
+
       return true;
     } catch (exception) {
       throw exception;
@@ -158,7 +208,7 @@ class ConnectionService {
         outboundMessage,
       );
 
-      await outboundAgentMessagePost(
+      Response r = await outboundAgentMessagePost(
         jsonDecode(outboundMessage)['endpoint'],
         outboundPackMessage,
       );
@@ -292,9 +342,9 @@ class ConnectionService {
         id: createPairwiseDidResponse[0] + ";indy",
         type: 'IndyAgent',
         priority: 0,
-        serviceEndpoint: user.serviceEndpoint, //'didcomm:transport/queue', //user.serviceEndpoint,
+        serviceEndpoint: 'didcomm:transport/queue', //user.serviceEndpoint,
         recipientKeys: [createPairwiseDidResponse[1]],
-        routingKeys: [user.routingKey],
+        routingKeys: user.routingKey == null ? [] : [user.routingKey],
       );
 
       Authentication auth = new Authentication(

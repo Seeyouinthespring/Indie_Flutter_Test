@@ -53,16 +53,9 @@ class _ConnectionScreenState extends State<ConnectionScreen>
   addNewConnection() async {
     var result = await BarcodeScanner.scan();
 
-
-    print('RESULT ===> $result');
-
     Object val = decodeInvitationFromUrl(result.rawContent);
-
-    print('val ===> $val');
-
     Map<String, dynamic> values = jsonDecode(val);
-
-    print('values ===> $values');
+    print('scanned values ===> $values');
 
 
     if (values['serviceEndpoint'] != null) {
@@ -72,6 +65,15 @@ class _ConnectionScreenState extends State<ConnectionScreen>
       });
       showAlertDialog(result.rawContent);
     }
+  }
+
+  getMessage() async {
+    await progressIndicator.show();
+    var message = await AriesFlutterMobileAgent.pickupMessage();
+    await progressIndicator.hide();
+
+    print('GOT MESSAGE => $message');
+
   }
 
   showAlertDialog(invitation) {
@@ -141,22 +143,20 @@ class _ConnectionScreenState extends State<ConnectionScreen>
 
   Future acceptInvitation(invitation) async {
     try {
-
-
-      print('INVITATION => $invitation ');
-
-
+      //print('INVITATION => $invitation ');
 
       await AriesFlutterMobileAgent.acceptInvitation(
         {},
         invitation,
       );
       progressIndicator.hide();
-      await AriesFlutterMobileAgent.socketInit();
+      //await AriesFlutterMobileAgent.socketInit();
       setState(() {
         getConnections();
       });
     } catch (exception) {
+      progressIndicator.hide();
+
       throw exception;
     }
   }
@@ -271,6 +271,11 @@ class _ConnectionScreenState extends State<ConnectionScreen>
                   RaisedButton(
                     onPressed: addNewConnection,
                     child: Text('--> Add new Connection'),
+                    color: Colors.blue[200],
+                  ),
+                  RaisedButton(
+                    onPressed: getMessage,
+                    child: Text('GET MESSAGE '),
                     color: Colors.blue[200],
                   ),
                   Expanded(

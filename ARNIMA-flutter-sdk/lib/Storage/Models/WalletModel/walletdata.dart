@@ -32,6 +32,9 @@ class WalletData extends HiveObject {
   @HiveField(7)
   final String routingKey;
 
+  @HiveField(8)
+  final String defaultMediatorId;
+
   WalletData(
     this.walletConfig,
     this.walletCredentials,
@@ -41,6 +44,7 @@ class WalletData extends HiveObject {
     this.masterSecretId,
     this.serviceEndpoint,
     this.routingKey,
+    this.defaultMediatorId,
   );
 
   WalletData.next(
@@ -51,5 +55,6 @@ class WalletData extends HiveObject {
       this.verkey,
       this.masterSecretId,
       this.serviceEndpoint,
-      this.routingKey});
+      this.routingKey,
+      this.defaultMediatorId});
 }

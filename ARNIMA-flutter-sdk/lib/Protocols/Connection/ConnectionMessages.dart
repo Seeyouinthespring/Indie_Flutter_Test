@@ -27,6 +27,18 @@ Object createInvitationMessage(
   return data;
 }
 
+Object createPickupMessage() {
+  var data = {
+    '@type': MessageType.BatchPickupMessage,
+    '@id': uuid.v4(),
+    'batch-size': 10,
+    '~transport': {
+      'return_route': 'all',
+    },
+  };
+  return jsonEncode(data);
+}
+
 Object createInvitationMessage1( // not used for now maybe will be required
     String did,
     String label,
