@@ -2,6 +2,7 @@
   Copyright AyanWorks Technology Solutions Pvt. Ltd. All Rights Reserved.
   SPDX-License-Identifier: Apache-2.0
 */
+import 'package:AriesFlutterMobileAgent/Protocols/Connection/InvitationInterface.dart';
 import 'package:AriesFlutterMobileAgent/Utils/DidDoc.dart';
 
 class Connection {
@@ -14,6 +15,12 @@ class Connection {
   DidDoc theirDidDoc;
   String createdAt;
   String updatedAt;
+  InvitationDetails invitation;
+  String mediatorId;
+  String role;
+  bool multiUseInvitation;
+  bool autoAcceptConnection;
+
 
   // ignore: non_constant_identifier_names
   String get connection_state => state;
@@ -33,6 +40,11 @@ class Connection {
     this.theirLabel,
     this.createdAt,
     this.updatedAt,
+    this.invitation,
+    this.role,
+    this.mediatorId,
+    this.autoAcceptConnection,
+    this.multiUseInvitation
   });
 
   Connection.fromJson(Map<String, dynamic> json) {
@@ -57,6 +69,12 @@ class Connection {
     } else {
       didDoc = null;
     }
+    if (json['invitation'] != null)
+      invitation = new InvitationDetails.fromJson(json['invitation']);
+    mediatorId = json['mediatorId'];
+    role = json['role'];
+    autoAcceptConnection = json['autoAcceptConnection'];
+    multiUseInvitation = json['multiUseInvitation'];
   }
 
   Map<String, dynamic> toJson() {
@@ -72,6 +90,12 @@ class Connection {
     data['theirLabel'] = this.theirLabel;
     data['createdAt'] = this.createdAt;
     data['updatedAt'] = this.updatedAt;
+    if (this.invitation != null)
+      data['invitation'] = this.invitation.toJson();
+    data['mediatorId'] = this.mediatorId;
+    data['role'] = this.role;
+    data['autoAcceptConnection'] = this.autoAcceptConnection;
+    data['multiUseInvitation'] = this.multiUseInvitation;
     return data;
   }
 }

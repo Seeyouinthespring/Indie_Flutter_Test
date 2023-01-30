@@ -143,7 +143,7 @@ class _ConnectionScreenState extends State<ConnectionScreen>
 
   Future acceptInvitation(invitation) async {
     try {
-      //print('INVITATION => $invitation ');
+      print('INVITATION => $invitation ');
 
       await AriesFlutterMobileAgent.acceptInvitation(
         {},

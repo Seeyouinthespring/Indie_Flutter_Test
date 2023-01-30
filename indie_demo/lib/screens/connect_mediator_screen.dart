@@ -55,7 +55,7 @@ class _ConnectMediatorScreenState extends State<ConnectMediatorScreen> {
 
       if (invitation.isNotEmpty) {
 
-        AriesFlutterMobileAgent.initPolling();
+        //AriesFlutterMobileAgent.initPolling();
 
         print('CONNECTED');
         this.setState(() {

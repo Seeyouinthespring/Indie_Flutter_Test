@@ -6,6 +6,7 @@ import 'dart:convert';
 
 import 'package:AriesFlutterMobileAgent/Agent/AriesFlutterMobileAgent.dart';
 import 'package:AriesFlutterMobileAgent/NetworkServices/Network.dart';
+import 'package:AriesFlutterMobileAgent/Protocols/Connection/InvitationInterface.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/TrustPing/TrustPingMessages.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/TrustPing/TrustPingState.dart';
 import 'package:AriesFlutterMobileAgent/Storage/DBModels.dart';
@@ -26,10 +27,9 @@ class ConnectionService {
     try {
       WalletData user = await DBServices.getWalletData();
       Connection connection = await createConnection(
-        configJson,
-        credentialsJson,
         didJson,
-        '',
+        null,
+        user,
       );
       await DBServices.saveConnections(
         ConnectionData(
@@ -53,50 +53,35 @@ class ConnectionService {
     }
   }
 
-  static Future acceptInvitation(
-    configJson,
-    credentialsJson,
-    didJson,
-    invite,
-  ) async {
+  static Future acceptInvitation(didJson, InvitationDetails invitation, WalletData user) async {
     try {
-
-      print('Accept invitation step 1');
-
-      var user = await DBServices.getWalletData();
-      print('Accept invitation step 2');
-      var invitation = jsonDecode(invite);
-      print('Accept invitation step 3');
       Connection connection = await createConnection(
-        configJson,
-        credentialsJson,
         didJson,
-        invitation['label'],
+        invitation,
+        user,
       );
-      print('Accept invitation step 4');
       var connectionRequest = createConnectionRequestMessage(
         connection,
         user.label,
       );
-      print('Accept invitation step 5');
       connection.connection_state = ConnectionStates.REQUESTED.state;
+
       var outboundMessage = createOutboundMessage(
         connection,
         connectionRequest,
-        invitation,
+        invitation: invitation,
+        simplePayload: user.defaultMediatorId.isEmpty
       );
-      print('Accept invitation step 6');
 
-      var outboundPackMessage = await packMessage(configJson, credentialsJson, outboundMessage);
+      print('CONNECTION OUTBOUND MESSAGE => ${jsonEncode(outboundMessage)}');
 
-      print('Accept invitation step 7');
+
+      var outboundPackMessage = await packMessage(user.walletConfig, user.walletCredentials, outboundMessage);
 
       Response response = await outboundAgentMessagePost(
-        invitation['serviceEndpoint'],
+        invitation.serviceEndpoint,
         outboundPackMessage,
       );
-
-      print('Accept invitation step 8');
 
       await DBServices.saveConnections(
         ConnectionData(
@@ -104,10 +89,6 @@ class ConnectionService {
           jsonEncode(connection),
         ),
       );
-
-
-      print('RESPONSE TO CONNECTION REQUEST => ${response.body}');
-      print('RESPONSE status code TO CONNECTION REQUEST => ${response.statusCode}');
 
       if (response.statusCode == 204)
         return false;
@@ -124,8 +105,6 @@ class ConnectionService {
           user.serviceEndpoint,
           user.routingKey,
           connection.verkey,
-          //incomingRouterResponse['serviceEndpoint'],
-          //incomingRouterResponse['routingKeys'],
         ),
       );
 
@@ -138,8 +117,7 @@ class ConnectionService {
 
       print('UNPACKED => ${jsonDecode(unpacked)}');
 
-      var b = await AriesFlutterMobileAgent.connectionRsponseType(user, jsonDecode(unpacked));
-
+      await AriesFlutterMobileAgent.connectionRsponseType(user, jsonDecode(unpacked));
 
       return true;
     } catch (exception) {
@@ -200,7 +178,7 @@ class ConnectionService {
 
       String trustPingMessage = createTrustPingMessage();
 
-      var outboundMessage = createOutboundMessage(connection, trustPingMessage);
+      Map<String, dynamic> outboundMessage = createOutboundMessage(connection, jsonDecode(trustPingMessage), simplePayload: true);
 
       var outboundPackMessage = await packMessage(
         configJson,
@@ -209,7 +187,7 @@ class ConnectionService {
       );
 
       Response r = await outboundAgentMessagePost(
-        jsonDecode(outboundMessage)['endpoint'],
+        outboundMessage['endpoint'],
         outboundPackMessage,
       );
 
@@ -302,34 +280,19 @@ class ConnectionService {
   }
 
   static Future createConnection(
-    String configJson,
-    String credentialsJson,
     Object didJson,
-    String label,
+    InvitationDetails invitation,
+    WalletData user,
   ) async {
     try {
-      WalletData user = await DBServices.getWalletData();
 
       var createPairwiseDidResponse =
           await channel.invokeMethod('createAndStoreMyDids', <String, dynamic>{
-        'configJson': configJson,
-        'credentialJson': credentialsJson,
+        'configJson': user.walletConfig,
+        'credentialJson': user.walletCredentials,
         'didJson': jsonEncode(didJson),
         'createMasterSecret': false,
       });
-
-      var apibody = {
-        'publicVerkey': user.verkey,
-        'verkey': createPairwiseDidResponse[1]
-      };
-
-      final String url =
-          user.serviceEndpoint.replaceAll(RegExp('endpoint'), '');
-
-      // await postData(
-      //   url + "verkey",
-      //   jsonEncode(apibody),
-      // );
 
       PublicKey publicKey = new PublicKey(
         id: createPairwiseDidResponse[0] + "#1",
@@ -339,12 +302,12 @@ class ConnectionService {
       );
 
       Service service = new Service(
-        id: createPairwiseDidResponse[0] + ";indy",
+        id: createPairwiseDidResponse[0] + "#IndyAgentService", //";indy",
         type: 'IndyAgent',
         priority: 0,
-        serviceEndpoint: 'didcomm:transport/queue', //user.serviceEndpoint,
+        serviceEndpoint: user.defaultMediatorId.isEmpty ? 'didcomm:transport/queue' : user.serviceEndpoint,
         recipientKeys: [createPairwiseDidResponse[1]],
-        routingKeys: user.routingKey == null ? [] : [user.routingKey],
+        routingKeys: invitation?.routingKeys == null ? [] : invitation.routingKeys,// ?? user.routingKey == null ? [] : [user.routingKey],
       );
 
       Authentication auth = new Authentication(
@@ -363,11 +326,16 @@ class ConnectionService {
       Connection connection = new Connection(
         did: createPairwiseDidResponse[0],
         didDoc: didDoc,
+        invitation: user.defaultMediatorId.isEmpty ? null : invitation,
         verkey: createPairwiseDidResponse[1],
-        state: ConnectionStates.INIT.state,
-        theirLabel: label,
+        state: ConnectionStates.INIT.state.toLowerCase(),
+        theirLabel: invitation == null ? '' : invitation.label,
         createdAt: new DateTime.now().toString(),
         updatedAt: new DateTime.now().toString(),
+        mediatorId: user.defaultMediatorId,
+        role: 'invitee',
+        autoAcceptConnection: true,
+        multiUseInvitation: false,
       );
 
       return connection;

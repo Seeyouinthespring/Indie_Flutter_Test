@@ -33,8 +33,6 @@ class ConnectWithMediatorService {
 
       print('INCOMING ROUTE RESPONSE ========> ${incomingRouterResponse} ');
 
-
-
       //var incomingRouterResponse = jsonDecode(await getData(url)); // how it can work
 
       var user = await DBServices.getWalletData();

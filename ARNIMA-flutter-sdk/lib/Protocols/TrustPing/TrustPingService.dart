@@ -29,7 +29,7 @@ class TrustPingService {
       );
       WalletData sdkDB = await DBServices.getWalletData();
       Map<String, dynamic> outboundMessage =
-          createOutboundMessage(connection, trustPingMessage);
+          createOutboundMessage(connection, jsonDecode(trustPingMessage));
       var outboundPackMessage = await packMessage(
           sdkDB.walletConfig, sdkDB.walletCredentials, outboundMessage);
 

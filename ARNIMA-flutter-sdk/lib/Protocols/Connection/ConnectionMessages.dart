@@ -36,7 +36,7 @@ Object createPickupMessage() {
       'return_route': 'all',
     },
   };
-  return jsonEncode(data);
+  return data;
 }
 
 Object createInvitationMessage1( // not used for now maybe will be required
@@ -65,7 +65,7 @@ Object createConnectionRequestMessage(
       'DIDDoc': connection.didDoc,
     },
   };
-  return jsonEncode(data);
+  return data;
 }
 
 Object createConnectionResponseMessage(

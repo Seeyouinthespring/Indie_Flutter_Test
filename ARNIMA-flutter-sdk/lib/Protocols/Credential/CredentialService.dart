@@ -163,7 +163,7 @@ class CredentialService {
 
       var outboundMessage = createOutboundMessage(
         connectionValues,
-        jsonEncode(credentialRequestMessage),
+        credentialRequestMessage
       );
 
       var outboundPackMessage = await packMessage(
@@ -326,7 +326,7 @@ class CredentialService {
           storedCredentialAckMessage(messageObject['~thread']['thid']);
 
       var outboundMessage = createOutboundMessage(
-          connectionValues, jsonEncode(credentialRequestMessage));
+        connectionValues, credentialRequestMessage);
 
       var outboundPackMessage = await packMessage(
         userData.walletConfig,

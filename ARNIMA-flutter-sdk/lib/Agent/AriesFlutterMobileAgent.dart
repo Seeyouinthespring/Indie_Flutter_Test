@@ -4,9 +4,9 @@
 */
 import 'dart:async';
 import 'dart:convert';
-import 'package:AriesFlutterMobileAgent/NetworkServices/Network.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/Connection/ConnectionInterface.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/Connection/ConnectionService.dart';
+import 'package:AriesFlutterMobileAgent/Protocols/Connection/InvitationInterface.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/Credential/CredentialService.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/Message/MessageService.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/Presentation/PresentationService.dart';
@@ -137,13 +137,16 @@ class AriesFlutterMobileAgent {
   ) async {
     try {
       WalletData user = await DBServices.getWalletData();
-      Object invitation = decodeInvitationFromUrl(message);
+      String jsonStringInvitation = decodeInvitationFromUrl(message);
+
+      print('json decoded invitation ${jsonDecode(jsonStringInvitation)}');
+
+      InvitationDetails invitation = new InvitationDetails.fromJson(jsonDecode(jsonStringInvitation));
 
       var acceptInvitationResponse = await ConnectionService.acceptInvitation(
-        user.walletConfig,
-        user.walletCredentials,
         didJson,
         invitation,
+        user
       );
       return acceptInvitationResponse;
     } catch (exception) {
@@ -556,7 +559,7 @@ class AriesFlutterMobileAgent {
 
       dynamic message = await MessageService.pickupMessage();
       await handleMessage(message);
-      //return message;
+      return message;
 
     } catch (exception) {
       print("Exception in pickupMessage $exception");

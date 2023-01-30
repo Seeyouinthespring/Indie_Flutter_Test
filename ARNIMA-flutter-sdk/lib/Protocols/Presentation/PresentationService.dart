@@ -110,7 +110,8 @@ class PresentationService {
       );
 
       var outboundMessage = createOutboundMessage(
-          connection, jsonEncode(creatPresentationMessageObject));
+          connection, creatPresentationMessageObject
+      );
       var outboundPackMessage = await packMessage(
         sdkDB.walletConfig,
         sdkDB.walletCredentials,

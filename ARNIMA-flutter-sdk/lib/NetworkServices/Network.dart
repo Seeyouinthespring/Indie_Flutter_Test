@@ -77,7 +77,6 @@ Future<dynamic> outboundAgentMessagePost(
     // print('BODY => $apiBody');
     // print('vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv');
 
-
     final response = await http.post(
       url,
       body: apiBody,
@@ -87,9 +86,7 @@ Future<dynamic> outboundAgentMessagePost(
       },
     );
 
-
     //print('RESPONSE status code => ${response.statusCode}');
-    //print('RESPONSE BODY bytes => ${response.bodyBytes}');
     //print('RESPONSE BODY string => ${response.body}');
 
     return response;

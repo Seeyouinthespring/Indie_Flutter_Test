@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:AriesFlutterMobileAgent/Protocols/Connection/ConnectionInterface.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/Connection/ConnectionMessages.dart';
+import 'package:AriesFlutterMobileAgent/Protocols/Connection/InvitationInterface.dart';
 import 'package:AriesFlutterMobileAgent/Utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -45,7 +46,7 @@ String encodeInvitationFromObject(
   return encodedUrl;
 }
 
-Object decodeInvitationFromUrl(String invitationUrl) {
+String decodeInvitationFromUrl(String invitationUrl) {
   //final List<String> encodedInvitation = invitationUrl.split('c_i=');
   final List<String> encodedInvitation = invitationUrl.split(new RegExp(r'c_i=|",'));
   final List<int> result = base64.decode(encodedInvitation[1]);
@@ -55,38 +56,38 @@ Object decodeInvitationFromUrl(String invitationUrl) {
 
 Object createOutboundMessage(
   Connection connection,
-  Object payload, [
-  invitation,
-]) {
-  try {
-    if (invitation != null) {
-      var data = {
-        'connection': jsonEncode(connection),
-        "endpoint": invitation['serviceEndpoint'],
-        "payload": jsonDecode(payload),
-        "recipientKeys": invitation['recipientKeys'],
-        "routingKeys": invitation.toString().contains('routingKeys')
-            ? invitation['routingKeys']
-            : [],
-        "senderVk": connection.verkey,
-      };
-      return jsonEncode(data);
-    } else {
-      DidDoc theirDidDoc = connection.theirDidDoc;
+  Map<String, dynamic> payload,
+  {bool simplePayload, InvitationDetails invitation}
 
-      if (theirDidDoc.toString().isEmpty) {
-        throw CustomExceptions().didDocEmpty();
-      }
-      var objValues = {
-        'connection': jsonEncode(connection),
-        'endpoint': theirDidDoc.service[0].serviceEndpoint,
-        'payload': jsonDecode(payload),
-        'recipientKeys': theirDidDoc.service[0].recipientKeys,
-        'routingKeys': theirDidDoc.service[0].routingKeys,
+) {
+  try {
+
+    Map<String, dynamic> objectValues;
+
+    DidDoc theirDidDoc = connection.theirDidDoc;
+    if (theirDidDoc.toString().isEmpty) {
+      throw CustomExceptions().didDocEmpty();
+    }
+
+    if (simplePayload){
+      objectValues = payload;
+      objectValues['routingKeys'] = invitation != null ? invitation.routingKeys : theirDidDoc.service[0].routingKeys;
+      objectValues['senderVk'] = connection.verkey;
+      objectValues['recipientKeys'] = invitation != null ? invitation.recipientKeys : theirDidDoc.service[0].recipientKeys;
+      objectValues['endpoint'] = invitation != null ? invitation.serviceEndpoint : theirDidDoc.service[0].serviceEndpoint;
+    } else {
+
+      objectValues = {
+        'connection': connection.toJson(),//jsonEncode(connection),
+        'endpoint': invitation != null ? invitation.serviceEndpoint : theirDidDoc.service[0].serviceEndpoint,
+        'payload': payload,
+        'recipientKeys': invitation != null ? invitation.recipientKeys : theirDidDoc.service[0].recipientKeys,
+        'routingKeys': invitation != null ? invitation.routingKeys : theirDidDoc.service[0].routingKeys,
         'senderVk': connection.verkey,
       };
-      return jsonEncode(objValues);
     }
+
+    return objectValues;
   } catch (exception) {
     throw exception;
   }
@@ -126,40 +127,43 @@ dynamic unPackMessage(
 dynamic packMessage(
   String configJson,
   String credentialsJson,
-  outboundMessage,
+  Map<String, dynamic> outboundMessage,
 ) async {
   try {
     var packedBufferMessage;
     var message;
-    var value = jsonDecode(outboundMessage);
 
     if (Platform.isIOS) {
       packedBufferMessage = await channel.invokeMethod('packMessage', <String, dynamic>{
         'configJson': configJson,
         'credentialsJson': credentialsJson,
-        'payload': jsonEncode(value['payload']),
-        'recipientKeys': value['recipientKeys'],
-        'senderVk': value['senderVk'],
+        'payload': jsonEncode(outboundMessage),//jsonEncode(value['payload']),
+        'recipientKeys': outboundMessage['recipientKeys'],
+        'senderVk': outboundMessage['senderVk'],
       });
       message = packedBufferMessage;
     } else {
-      Uint8List bytes = utf8.encode(jsonEncode(value['payload']));
+      Uint8List bytes = utf8.encode(jsonEncode(outboundMessage));
       packedBufferMessage =
           await channel.invokeMethod('packMessage', <String, dynamic>{
         'configJson': configJson,
         'credentialJson': credentialsJson,
         'payload': bytes,
-        'recipientKeys': value['recipientKeys'],
-        'senderVk': value['senderVk'],
+        'recipientKeys': outboundMessage['recipientKeys'],
+        'senderVk': outboundMessage['senderVk'],
       });
       var outboundPackedMessage = utf8.decode(packedBufferMessage?.cast<int>());
       message = outboundPackedMessage;
     }
 
+
+
     var forwardBufferMessage;
-    if (value['routingKeys'] != null && value['routingKeys'].isNotEmpty && value['routingKeys'].length > 0) { // TODO here
-      for (var routingKey in value['routingKeys']) {
-        dynamic recipientKey = jsonDecode(outboundMessage)['recipientKeys'];
+    if (outboundMessage['routingKeys'] != null &&
+        (outboundMessage['routingKeys'] as List<String>).isNotEmpty
+    ) {
+      for (var routingKey in outboundMessage['routingKeys']) {
+        dynamic recipientKey = outboundMessage['recipientKeys'];
 
         Object forwardMessage = createForwardMessage(recipientKey[0], message);
         List<int> forwardMessageBuffer =
@@ -171,7 +175,7 @@ dynamic packMessage(
             'credentialsJson': credentialsJson,
             'payload': jsonEncode(forwardMessage),
             'recipientKeys': [routingKey],
-            'senderVk': value['senderVk'],
+            'senderVk': outboundMessage['senderVk'],
           });
           return message = forwardBufferMessage;
         } else {
@@ -181,7 +185,7 @@ dynamic packMessage(
             'credentialJson': credentialsJson,
             'payload': forwardMessageBuffer,
             'recipientKeys': [routingKey],
-            'senderVk': value['senderVk'],
+            'senderVk': outboundMessage['senderVk'],
           });
           var message = utf8.decode(packedBufferMessage?.cast<int>());
           return message;

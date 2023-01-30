@@ -10,8 +10,8 @@ class MessageType {
   //static const String MessagePickup = "https://didcomm.org/messagepickup/1.0/batch-pickup";
   static const String TrustPingResponseMessage =
       "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping_response";
-  static const String ForwardMessage =
-      "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward";
+  // static const String ForwardMessage =
+  //     "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward";
   static const String Ack =
       "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/notification/1.0/ack'";
   static const String ProposeCredential =
@@ -38,7 +38,7 @@ class MessageType {
       "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview";
 
 
-
+  static const String ForwardMessage = "https://didcomm.org/routing/1.0/forward";
   static const String ConnectionResponse = 'https://didcomm.org/connections/1.0/response';
   static const String ConnectionRequest = 'https://didcomm.org/connections/1.0/request';
   static const String BatchMessage = "https://didcomm.org/messagepickup/1.0/batch";
