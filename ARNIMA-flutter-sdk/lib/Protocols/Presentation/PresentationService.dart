@@ -109,16 +109,19 @@ class PresentationService {
         message['@id'],
       );
 
-      var outboundMessage = createOutboundMessage(
-          connection, creatPresentationMessageObject
-      );
+      // var outboundMessage = createOutboundMessage(
+      //     connection, creatPresentationMessageObject
+      // );
+      Keys keys = getKeys(connection);
+
       var outboundPackMessage = await packMessage(
         sdkDB.walletConfig,
         sdkDB.walletCredentials,
-        outboundMessage,
+        creatPresentationMessageObject,
+        keys,
       );
       await outboundAgentMessagePost(
-        jsonDecode(outboundMessage)['endpoint'],
+        keys.endpoint,
         outboundPackMessage,
       );
 

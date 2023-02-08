@@ -54,44 +54,60 @@ String decodeInvitationFromUrl(String invitationUrl) {
   return invitation;
 }
 
-Object createOutboundMessage(
-  Connection connection,
-  Map<String, dynamic> payload,
-  {bool simplePayload, InvitationDetails invitation}
-
-) {
-  try {
-
-    Map<String, dynamic> objectValues;
-
-    DidDoc theirDidDoc = connection.theirDidDoc;
-    if (theirDidDoc.toString().isEmpty) {
-      throw CustomExceptions().didDocEmpty();
-    }
-
-    if (simplePayload){
-      objectValues = payload;
-      objectValues['routingKeys'] = invitation != null ? invitation.routingKeys : theirDidDoc.service[0].routingKeys;
-      objectValues['senderVk'] = connection.verkey;
-      objectValues['recipientKeys'] = invitation != null ? invitation.recipientKeys : theirDidDoc.service[0].recipientKeys;
-      objectValues['endpoint'] = invitation != null ? invitation.serviceEndpoint : theirDidDoc.service[0].serviceEndpoint;
-    } else {
-
-      objectValues = {
-        'connection': connection.toJson(),//jsonEncode(connection),
-        'endpoint': invitation != null ? invitation.serviceEndpoint : theirDidDoc.service[0].serviceEndpoint,
-        'payload': payload,
-        'recipientKeys': invitation != null ? invitation.recipientKeys : theirDidDoc.service[0].recipientKeys,
-        'routingKeys': invitation != null ? invitation.routingKeys : theirDidDoc.service[0].routingKeys,
-        'senderVk': connection.verkey,
-      };
-    }
-
-    return objectValues;
-  } catch (exception) {
-    throw exception;
-  }
-}
+// Object createOutboundMessage(
+//   Connection connection,
+//   Map<String, dynamic> payload,
+//   {bool simplePayload, InvitationDetails invitation}
+//
+// ) {
+//   try {
+//
+//
+//
+//     Map<String, dynamic> objectValues;
+//
+//
+//
+//     //if (simplePayload){
+//     if (true){
+//       objectValues = payload;
+//
+//       // if (invitation == null){
+//       //   if (theirDidDoc == null){
+//       //     objectValues['routingKeys'] = [];
+//       //   } else{
+//       //     objectValues['routingKeys'] = theirDidDoc.service[0].routingKeys;
+//       //   }
+//       // }
+//       // else {
+//       //   if (invitation.routingKeys.isEmpty){
+//       //     objectValues['routingKeys'] = [];
+//       //   }
+//       //   else {
+//       //     objectValues['routingKeys'] = invitation.routingKeys;
+//       //   }
+//       // }
+//       // //objectValues['routingKeys'] = invitation != null ? invitation.routingKeys : theirDidDoc.service[0].routingKeys;
+//       // objectValues['senderVk'] = connection.verkey;
+//       // objectValues['recipientKeys'] = invitation != null ? invitation.recipientKeys : theirDidDoc.service[0].recipientKeys;
+//       // objectValues['endpoint'] = invitation != null ? invitation.serviceEndpoint : theirDidDoc.service[0].serviceEndpoint;
+//     } else {
+//
+//       objectValues = {
+//         'connection': connection.toJson(),//jsonEncode(connection),
+//         'endpoint': invitation != null ? invitation.serviceEndpoint : theirDidDoc.service[0].serviceEndpoint,
+//         'payload': payload,
+//         'recipientKeys': invitation != null ? invitation.recipientKeys : theirDidDoc.service[0].recipientKeys,
+//         'routingKeys': invitation != null ? invitation.routingKeys : theirDidDoc.service[0].routingKeys,
+//         'senderVk': connection.verkey,
+//       };
+//     }
+//
+//     return objectValues;
+//   } catch (exception) {
+//     throw exception;
+//   }
+// }
 
 dynamic unPackMessage(
   String configJson,
@@ -125,21 +141,37 @@ dynamic unPackMessage(
 }
 
 dynamic packMessage(
-  String configJson,
-  String credentialsJson,
-  Map<String, dynamic> outboundMessage,
+    String configJson,
+    String credentialsJson,
+    Map<String, dynamic> outboundMessage,
+    Keys keys,
 ) async {
   try {
     var packedBufferMessage;
     var message;
+
+
+    print('PACKING ... => ${jsonEncode(outboundMessage)}');
+
+    //
+    // String senderVk = outboundMessage['senderVk'];
+    // List<String> routingKeys = outboundMessage['routingKeys'];
+    // List<String> recipientKeys = outboundMessage['recipientKeys'];
+    // String serviceEndpoint = outboundMessage['serviceEndpoint'];
+    //
+    // outboundMessage.removeWhere((key, value) => key == "recipientKeys");
+    // outboundMessage.removeWhere((key, value) => key == "routingKeys");
+    // outboundMessage.removeWhere((key, value) => key == "senderVk");
+    // outboundMessage.removeWhere((key, value) => key == "serviceEndpoint");
+
 
     if (Platform.isIOS) {
       packedBufferMessage = await channel.invokeMethod('packMessage', <String, dynamic>{
         'configJson': configJson,
         'credentialsJson': credentialsJson,
         'payload': jsonEncode(outboundMessage),//jsonEncode(value['payload']),
-        'recipientKeys': outboundMessage['recipientKeys'],
-        'senderVk': outboundMessage['senderVk'],
+        'recipientKeys': keys.recipientKeys, //outboundMessage['recipientKeys'],
+        'senderVk': keys.senderVk, //outboundMessage['senderVk'],
       });
       message = packedBufferMessage;
     } else {
@@ -149,8 +181,8 @@ dynamic packMessage(
         'configJson': configJson,
         'credentialJson': credentialsJson,
         'payload': bytes,
-        'recipientKeys': outboundMessage['recipientKeys'],
-        'senderVk': outboundMessage['senderVk'],
+        'recipientKeys': keys.recipientKeys, //outboundMessage['recipientKeys'],
+        'senderVk': keys.senderVk, // outboundMessage['senderVk'],
       });
       var outboundPackedMessage = utf8.decode(packedBufferMessage?.cast<int>());
       message = outboundPackedMessage;
@@ -158,14 +190,17 @@ dynamic packMessage(
 
 
 
-    var forwardBufferMessage;
-    if (outboundMessage['routingKeys'] != null &&
-        (outboundMessage['routingKeys'] as List<String>).isNotEmpty
-    ) {
-      for (var routingKey in outboundMessage['routingKeys']) {
-        dynamic recipientKey = outboundMessage['recipientKeys'];
 
-        Object forwardMessage = createForwardMessage(recipientKey[0], message);
+    print('outbound message type ${outboundMessage['@type']}');
+
+    var forwardBufferMessage;
+
+    if (keys.routingKeys != null && keys.routingKeys.isNotEmpty && outboundMessage['@type'] != MessageType.KeylistUpdateMessage) {
+    //if (outboundMessage['routingKeys'] != null && (outboundMessage['routingKeys'] as List<String>).isNotEmpty && outboundMessage['@type'] != MessageType.KeylistUpdateMessage) {
+      print('WE ARE GOING TO OD FORWARD');
+      for (var routingKey in keys.routingKeys) {
+
+        Object forwardMessage = createForwardMessage(keys.recipientKeys[0], message);
         List<int> forwardMessageBuffer =
             utf8.encode(jsonEncode(forwardMessage));
         if (Platform.isIOS) {
@@ -175,7 +210,7 @@ dynamic packMessage(
             'credentialsJson': credentialsJson,
             'payload': jsonEncode(forwardMessage),
             'recipientKeys': [routingKey],
-            'senderVk': outboundMessage['senderVk'],
+            'senderVk': keys.senderVk,
           });
           return message = forwardBufferMessage;
         } else {
@@ -185,7 +220,7 @@ dynamic packMessage(
             'credentialJson': credentialsJson,
             'payload': forwardMessageBuffer,
             'recipientKeys': [routingKey],
-            'senderVk': outboundMessage['senderVk'],
+            'senderVk': keys.senderVk,
           });
           var message = utf8.decode(packedBufferMessage?.cast<int>());
           return message;
@@ -304,4 +339,20 @@ dynamic sign(
   } catch (exception) {
     throw exception;
   }
+}
+
+Keys getKeys(Connection connection, {InvitationDetails invitation}){
+  Keys keys = new Keys(
+    recipientKeys: invitation?.recipientKeys != null
+        ? invitation.recipientKeys
+        : connection?.theirDidDoc?.service[0]?.recipientKeys ?? [],
+    routingKeys: invitation?.routingKeys != null
+        ? invitation.routingKeys
+        : connection?.theirDidDoc?.service[0]?.routingKeys ?? [],
+    endpoint: invitation?.serviceEndpoint != null
+        ? invitation.serviceEndpoint
+        : connection?.theirDidDoc?.service[0]?.serviceEndpoint ?? [],
+    senderVk: connection.verkey,
+  );
+  return keys;
 }

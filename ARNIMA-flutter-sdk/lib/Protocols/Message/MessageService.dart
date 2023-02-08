@@ -30,12 +30,14 @@ class MessageService {
 
       Object message = createPickupMessage();
 
-      Map<String, dynamic> outboundMessage = createOutboundMessage(connection, message, simplePayload: true);
+      //Map<String, dynamic> outboundMessage = createOutboundMessage(connection, message, simplePayload: true);
 
-      dynamic outboundPackMessage = await packMessage(user.walletConfig, user.walletCredentials, outboundMessage);
+      Keys keys = getKeys(connection);
+
+      dynamic outboundPackMessage = await packMessage(user.walletConfig, user.walletCredentials, message, keys);
 
       Response response = await outboundAgentMessagePost(
-        outboundMessage['endpoint'],
+        keys.endpoint,
         outboundPackMessage,
       );
       dynamic unpacked = await unPackMessage(

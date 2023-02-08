@@ -99,3 +99,36 @@ class Connection {
     return data;
   }
 }
+
+class Keys{
+  String endpoint;
+  List<String> recipientKeys;
+  List<String> routingKeys;
+  String senderVk;
+
+  Keys({
+    this.routingKeys, this.recipientKeys, this.senderVk, this.endpoint
+  });
+
+  Map<String,dynamic> toJson(){
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['routingKeys'] = this.routingKeys;
+    data['recipientKeys'] = this.recipientKeys;
+    data['senderVk'] = this.senderVk;
+    data['endpoint'] = this.endpoint;
+    return data;
+  }
+
+  Keys.fromJson(Map<String, dynamic> json) {
+
+    this.endpoint = json['endpoint'];
+    this.senderVk = json['senderVk'];
+    this.recipientKeys = [];
+    if (json['recipientKeys'] != null)
+      json['recipientKeys'].forEach((key) => this.recipientKeys.add(key));
+    this.routingKeys = [];
+    if (json['routingKeys'] != null)
+      json['routingKeys'].forEach((key) => this.routingKeys.add(key));
+  }
+
+}

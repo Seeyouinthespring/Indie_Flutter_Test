@@ -53,14 +53,17 @@ class CredentialService {
       );
 
       if (credentialProposalMsg != null) {
-        var outboundMessage =
-            createOutboundMessage(connectionValues, credentialProposalMsg);
+        // var outboundMessage =
+        //     createOutboundMessage(connectionValues, credentialProposalMsg);
+
+        Keys keys = getKeys(connectionValues);
 
         var outboundPackMessage =
-            await packMessage(configJson, credentialsJson, outboundMessage);
+            await packMessage(configJson, credentialsJson, credentialProposalMsg, keys);
+
 
         await outboundAgentMessagePost(
-          jsonDecode(outboundMessage)['endpoint'],
+          keys.endpoint,
           outboundPackMessage,
         );
         await DBServices.storeIssuecredential(
@@ -161,19 +164,22 @@ class CredentialService {
         threadId,
       );
 
-      var outboundMessage = createOutboundMessage(
-        connectionValues,
-        credentialRequestMessage
-      );
+      // var outboundMessage = createOutboundMessage(
+      //   connectionValues,
+      //   credentialRequestMessage
+      // );
+
+      Keys keys = getKeys(connectionValues);
 
       var outboundPackMessage = await packMessage(
         sdkDB.walletConfig,
         sdkDB.walletCredentials,
-        outboundMessage,
+        credentialRequestMessage,
+        keys,
       );
 
       await outboundAgentMessagePost(
-        jsonDecode(outboundMessage)['endpoint'],
+        keys.endpoint,
         outboundPackMessage,
       );
 
@@ -325,17 +331,20 @@ class CredentialService {
       var credentialRequestMessage =
           storedCredentialAckMessage(messageObject['~thread']['thid']);
 
-      var outboundMessage = createOutboundMessage(
-        connectionValues, credentialRequestMessage);
+      // var outboundMessage = createOutboundMessage(
+      //   connectionValues, credentialRequestMessage);
+
+      Keys keys = getKeys(connectionValues);
 
       var outboundPackMessage = await packMessage(
         userData.walletConfig,
         userData.walletCredentials,
-        outboundMessage,
+        credentialRequestMessage,
+        keys,
       );
 
       await outboundAgentMessagePost(
-        jsonDecode(outboundMessage)['endpoint'],
+        keys.endpoint,
         outboundPackMessage,
       );
 

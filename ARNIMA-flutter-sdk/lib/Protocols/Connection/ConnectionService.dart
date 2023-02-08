@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:AriesFlutterMobileAgent/Agent/AriesFlutterMobileAgent.dart';
 import 'package:AriesFlutterMobileAgent/NetworkServices/Network.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/Connection/InvitationInterface.dart';
+import 'package:AriesFlutterMobileAgent/Protocols/KeylistUpdate/KeylistUpdateService.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/TrustPing/TrustPingMessages.dart';
 import 'package:AriesFlutterMobileAgent/Protocols/TrustPing/TrustPingState.dart';
 import 'package:AriesFlutterMobileAgent/Storage/DBModels.dart';
@@ -55,28 +56,39 @@ class ConnectionService {
 
   static Future acceptInvitation(didJson, InvitationDetails invitation, WalletData user) async {
     try {
+
       Connection connection = await createConnection(
         didJson,
         invitation,
         user,
       );
+
+      if (user.defaultMediatorId.isNotEmpty){
+        ConnectionData connectionDB = await DBServices.getConnection(user.defaultMediatorId);
+        Connection mediatorConnection = Connection.fromJson(jsonDecode(connectionDB.connection));
+        await KeylistUpdateService.sendKeylistUpdateRequest(user, mediatorConnection, invitation: invitation, verkey: connection.verkey);
+      }
+
+
       var connectionRequest = createConnectionRequestMessage(
         connection,
         user.label,
       );
       connection.connection_state = ConnectionStates.REQUESTED.state;
 
-      var outboundMessage = createOutboundMessage(
-        connection,
-        connectionRequest,
-        invitation: invitation,
-        simplePayload: user.defaultMediatorId.isEmpty
-      );
+      Keys keys = getKeys(connection, invitation: invitation);
 
-      print('CONNECTION OUTBOUND MESSAGE => ${jsonEncode(outboundMessage)}');
+      // var outboundMessage = createOutboundMessage(
+      //   connection,
+      //   connectionRequest,
+      //   invitation: invitation,
+      //   simplePayload: user.defaultMediatorId.isEmpty
+      // );
+
+      //print('CONNECTION OUTBOUND MESSAGE => ${jsonEncode(outboundMessage)}');
 
 
-      var outboundPackMessage = await packMessage(user.walletConfig, user.walletCredentials, outboundMessage);
+      var outboundPackMessage = await packMessage(user.walletConfig, user.walletCredentials, connectionRequest, keys);
 
       Response response = await outboundAgentMessagePost(
         invitation.serviceEndpoint,
@@ -117,7 +129,20 @@ class ConnectionService {
 
       print('UNPACKED => ${jsonDecode(unpacked)}');
 
+      print('step 1. Trust Ping');
       await AriesFlutterMobileAgent.connectionRsponseType(user, jsonDecode(unpacked));
+      print('step 2. Mediate Request');
+      await KeylistUpdateService.sendMediateRequest(user, connection, invitation: invitation);
+      print('step 3. Keylist Update');
+
+      var createPairwiseDidResponse = await channel.invokeMethod('createAndStoreMyDids', <String, dynamic>{
+        'configJson': user.walletConfig,
+        'credentialJson': user.walletCredentials,
+        'didJson': jsonEncode(didJson),
+        'createMasterSecret': false,
+      });
+
+      await KeylistUpdateService.sendKeylistUpdateRequest(user, connection, invitation: invitation, verkey: createPairwiseDidResponse[1]);
 
       return true;
     } catch (exception) {
@@ -126,8 +151,7 @@ class ConnectionService {
   }
 
   static Future<bool> acceptResponse(
-    String configJson,
-    String credentialsJson,
+    WalletData user,
     InboundMessage inboundMessage,
   ) async {
     try {
@@ -155,8 +179,8 @@ class ConnectionService {
           Connection.fromJson(jsonDecode(connectionDb.connection));
 
       var receivedMessage = await verify(
-        configJson,
-        credentialsJson,
+        user.walletConfig,
+        user.walletCredentials,
         typeMessage,
         'connection',
       );
@@ -178,18 +202,23 @@ class ConnectionService {
 
       String trustPingMessage = createTrustPingMessage();
 
-      Map<String, dynamic> outboundMessage = createOutboundMessage(connection, jsonDecode(trustPingMessage), simplePayload: true);
+      //Map<String, dynamic> outboundMessage = createOutboundMessage(connection, jsonDecode(trustPingMessage), simplePayload: true);
+      Keys keys = getKeys(connection);
 
       var outboundPackMessage = await packMessage(
-        configJson,
-        credentialsJson,
-        outboundMessage,
+        user.walletConfig,
+        user.walletCredentials,
+        jsonDecode(trustPingMessage),
+        keys
       );
 
       Response r = await outboundAgentMessagePost(
-        outboundMessage['endpoint'],
+        keys.endpoint,
         outboundPackMessage,
       );
+
+
+      print('TRUST PING RESPONSE => ${r.statusCode}');
 
       await DBServices.updateConnection(
         ConnectionData(
@@ -263,12 +292,11 @@ class ConnectionService {
         connectionResponse,
         'connection',
       );
-      Map<String, dynamic> outboundMessage =
-          createOutboundMessage(connection, signedConnectionResponse);
-      var outboundPackMessage =
-          await packMessage(configJson, credentialsJson, outboundMessage);
+      //Map<String, dynamic> outboundMessage = createOutboundMessage(connection, signedConnectionResponse);
+      Keys keys = getKeys(connection);
+      var outboundPackMessage = await packMessage(configJson, credentialsJson, signedConnectionResponse, keys);
       await outboundAgentMessagePost(
-        outboundMessage['endpoint'],
+        keys.endpoint,
         jsonEncode(outboundPackMessage),
       );
       await DBServices.saveConnections(storeDataintoDB);
@@ -293,6 +321,9 @@ class ConnectionService {
         'didJson': jsonEncode(didJson),
         'createMasterSecret': false,
       });
+
+      print('FIRST KEY => ${createPairwiseDidResponse[0]}');
+      print('SECOND KEY => ${createPairwiseDidResponse[1]}');
 
       PublicKey publicKey = new PublicKey(
         id: createPairwiseDidResponse[0] + "#1",

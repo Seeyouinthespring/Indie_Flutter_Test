@@ -28,13 +28,15 @@ class TrustPingService {
         TrustPingState.SENT.state,
       );
       WalletData sdkDB = await DBServices.getWalletData();
-      Map<String, dynamic> outboundMessage =
-          createOutboundMessage(connection, jsonDecode(trustPingMessage));
+
+      Keys keys = getKeys(connection);
+
+      //Map<String, dynamic> outboundMessage = createOutboundMessage(connection, jsonDecode(trustPingMessage));
       var outboundPackMessage = await packMessage(
-          sdkDB.walletConfig, sdkDB.walletCredentials, outboundMessage);
+          sdkDB.walletConfig, sdkDB.walletCredentials, jsonDecode(trustPingMessage), keys);
 
       await outboundAgentMessagePost(
-        outboundMessage['endpoint'],
+        keys.endpoint,
         jsonEncode(outboundPackMessage),
       );
       await DBServices.storeTrustPing(trustPing);
@@ -86,15 +88,16 @@ class TrustPingService {
 
       if (parsedMessage['response_requested']) {
         var reply = createTrustPingResponseMessage(parsedMessage['@id']);
-        Map<String, dynamic> outboundMessage =
-            createOutboundMessage(connection, reply);
+        //Map<String, dynamic> outboundMessage = createOutboundMessage(connection, reply);
+        Keys keys = getKeys(connection);
         var outboundPackMessage = await packMessage(
           configJson,
           credentialsJson,
-          outboundMessage,
+          reply,
+          keys,
         );
         await outboundAgentMessagePost(
-          outboundMessage['endpoint'],
+          keys.endpoint,
           jsonEncode(outboundPackMessage),
         );
       }

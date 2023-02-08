@@ -417,8 +417,7 @@ class AriesFlutterMobileAgent {
       {List<MessageData> dbMessages = const [], int i = 0}) async {
     try {
       var isCompleted = await ConnectionService.acceptResponse(
-        user.walletConfig,
-        user.walletCredentials,
+        user,
         InboundMessage(
           message: message['message'],
           recipientVerkey: message['recipient_verkey'],

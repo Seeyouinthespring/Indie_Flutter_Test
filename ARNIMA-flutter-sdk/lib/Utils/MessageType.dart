@@ -37,7 +37,8 @@ class MessageType {
   static const String CredentialPreview =
       "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview";
 
-
+  static const String MediateRequestMessage = "https://didcomm.org/coordinate-mediation/1.0/mediate-request";
+  static const String KeylistUpdateMessage = "https://didcomm.org/coordinate-mediation/1.0/keylist-update";
   static const String ForwardMessage = "https://didcomm.org/routing/1.0/forward";
   static const String ConnectionResponse = 'https://didcomm.org/connections/1.0/response';
   static const String ConnectionRequest = 'https://didcomm.org/connections/1.0/request';
