@@ -8,8 +8,8 @@ class MessageType {
   // static const String TrustPingMessage =
   //     "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping";
   //static const String MessagePickup = "https://didcomm.org/messagepickup/1.0/batch-pickup";
-  static const String TrustPingResponseMessage =
-      "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping_response";
+  // static const String TrustPingResponseMessage =
+  //     "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/trust_ping/1.0/ping_response";
   // static const String ForwardMessage =
   //     "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward";
   static const String Ack =
@@ -45,4 +45,5 @@ class MessageType {
   static const String BatchMessage = "https://didcomm.org/messagepickup/1.0/batch";
   static const String BatchPickupMessage = "https://didcomm.org/messagepickup/1.0/batch-pickup";
   static const String TrustPingMessage = "https://didcomm.org/trust_ping/1.0/ping";
+  static const String TrustPingResponseMessage = "https://didcomm.org/trust_ping/1.0/ping_response";
 }

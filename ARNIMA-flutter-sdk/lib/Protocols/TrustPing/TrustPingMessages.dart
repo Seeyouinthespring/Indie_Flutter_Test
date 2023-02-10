@@ -8,14 +8,14 @@ import 'package:AriesFlutterMobileAgent/Utils/MessageType.dart';
 import 'package:uuid/uuid.dart';
 
 String createTrustPingMessage({
-  bool responseRequested = true,
+  bool responseRequested = false,
   String comment = '',
 }) {
   Map<String, dynamic> trustedMessage = {
     '@id': Uuid().v4(),
     '@type': MessageType.TrustPingMessage,
     'comment': comment,
-    'responseRequested': responseRequested
+    'response_requested': responseRequested
   };
 
   return jsonEncode(trustedMessage);

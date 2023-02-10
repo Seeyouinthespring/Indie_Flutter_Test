@@ -416,6 +416,9 @@ class AriesFlutterMobileAgent {
   static connectionRsponseType(WalletData user, Map<String, dynamic> message,
       {List<MessageData> dbMessages = const [], int i = 0}) async {
     try {
+
+      print('@@@@@@@@@@@@@@@@@@@@@ Connection response type is called. Message = ${message}');
+
       var isCompleted = await ConnectionService.acceptResponse(
         user,
         InboundMessage(
@@ -554,10 +557,12 @@ class AriesFlutterMobileAgent {
     try {
       //WalletData user = await DBServices.getWalletData();
 
-      print('IM HERE ');
+      print('IM HERE 1');
 
       dynamic message = await MessageService.pickupMessage();
+      print('IM HERE 2');
       await handleMessage(message);
+      print('IM HERE 3');
       return message;
 
     } catch (exception) {
@@ -568,38 +573,30 @@ class AriesFlutterMobileAgent {
 
   static Future handleMessage(dynamic message) async {
 
-
-
+    print('@@@@@@@@@@@@@@@@@@@@@ Handling pickedup message');
     var messageValues = new Map<String, dynamic>.from(jsonDecode(message['message']));
-    var messagesAttached = messageValues['messages~attach'] as List;
-
-    print('messageValues[@type] => ${messageValues['@type']}');
-    print('MessageType.MessagePickup => ${MessageType.BatchMessage}');
-    print('messagesAttached => ${messagesAttached}');
-
-
-    WalletData user = await DBServices.getWalletData();
-
+    List messagesAttached = messageValues['messages~attach'] as List;
+    print('MESSAGES ATTACHED LENGTH => ${messagesAttached.length}');
     if (messageValues['@type'] == MessageType.BatchMessage && messagesAttached.isEmpty){
       print('NO MESSAGES FOR ME :( ');
       return;
     }
 
+    WalletData user = await DBServices.getWalletData();
+
     var unPackMessageResponse = await unPackMessage(
-      user.walletConfig,
-      user.walletCredentials,
-      messagesAttached
+        user.walletConfig,
+        user.walletCredentials,
+        jsonEncode(messagesAttached[0]['message'])
     );
 
-    print('UNPACKED MESSAGE => $unPackMessageResponse');
+    Map<String, dynamic> jsonMessage = jsonDecode(unPackMessageResponse);
 
-    //Map<String, dynamic> messageValues = jsonDecode(message['message']);
-    switch (messageValues['@type']) {
+    print('@@@@@@@@@@@@@@@@@@@@@ Message unpacked. Json message = ${jsonMessage}');
+
+    switch (jsonDecode(jsonMessage['message'])['@type']) {
       case MessageType.ConnectionResponse:
-
-        print('I AM IN THE CONNECTION RESPONSE handler !!!!!!!!!!!!!!!!!');
-
-        connectionRsponseType(user, message);
+        connectionRsponseType(user, jsonMessage);
         break;
       case MessageType.ConnectionRequest:
         connectionRequestType(user, message);
@@ -608,6 +605,9 @@ class AriesFlutterMobileAgent {
         trustPingMessageType(user, message);
         break;
       case MessageType.TrustPingResponseMessage:
+
+        print('I AM IN THE TRUST PING MESSAGE RESPONSE HANDLER !!!');
+
         trustPingMessageResponseType(user, message);
         break;
       case MessageType.OfferCredential:
@@ -623,18 +623,8 @@ class AriesFlutterMobileAgent {
         presentationAckType(user, message);
         break;
       case MessageType.BatchMessage:
-
-
         print('BATCH MESSAGE HANDLING => ${messagesAttached}');
         print('BATCH MESSAGE HANDLING => ${messagesAttached.length}');
-
-        // var unPackMessageResponse = await unPackMessage(
-        //     user.walletConfig,
-        //     user.walletCredentials,
-        //     messagesAttached;
-        // );
-
-
         break;
       default:
         print('In Default Case, ${messageValues['@type']}');

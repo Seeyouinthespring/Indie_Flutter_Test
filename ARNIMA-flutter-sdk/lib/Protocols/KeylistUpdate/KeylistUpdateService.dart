@@ -27,6 +27,12 @@ class KeylistUpdateService {
       Keys keys = getKeys(connection, invitation: invitation);
 
 
+      // print('KEY LIST UPDATE keys  recipirnt keys=> ${keys.recipientKeys}');
+      // print('KEY LIST UPDATE keys routing keys => ${keys.routingKeys}');
+      // print('KEY LIST UPDATE keys endpoint => ${keys.endpoint}');
+      // print('KEY LIST UPDATE keys senderVk => ${keys.senderVk}');
+
+
       var outboundPackKeylistUpdateMessage = await packMessage(
         user.walletConfig,
         user.walletCredentials,
@@ -41,14 +47,14 @@ class KeylistUpdateService {
 
       print('KEY LIST UPDATE RESPONSE => ${keylistUpdateResponse.statusCode}');
 
-      if (keylistUpdateResponse.statusCode == 200){
-        var unpacked = await unPackMessage(
-          user.walletConfig,
-          user.walletCredentials,
-          keylistUpdateResponse.body,
-        );
-        print('UNPACKED => ${jsonDecode(unpacked)}');
-      }
+      // if (keylistUpdateResponse.statusCode == 200){
+      //   var unpacked = await unPackMessage(
+      //     user.walletConfig,
+      //     user.walletCredentials,
+      //     keylistUpdateResponse.body,
+      //   );
+      //   print('UNPACKED => ${jsonDecode(unpacked)}');
+      // }
     } catch (e){
       print('Error  $e' );
       return false;
@@ -79,15 +85,15 @@ class KeylistUpdateService {
       );
 
       print('MEDIATE REQUEST RESPONSE => ${keylistUpdateResponse.statusCode}');
-      
-      if (keylistUpdateResponse.statusCode == 200){
-        var unpacked = await unPackMessage(
-          user.walletConfig,
-          user.walletCredentials,
-          keylistUpdateResponse.body,
-        );
-        print('UNPACKED => ${jsonDecode(unpacked)}');
-      }
+
+      // if (keylistUpdateResponse.statusCode == 200){
+      //   var unpacked = await unPackMessage(
+      //     user.walletConfig,
+      //     user.walletCredentials,
+      //     keylistUpdateResponse.body,
+      //   );
+      //   print('UNPACKED => ${jsonDecode(unpacked)}');
+      // }
     } catch (e){
       print('Error  $e' );
       return false;

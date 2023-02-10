@@ -63,10 +63,13 @@ class ConnectionService {
         user,
       );
 
+      print('@@@@@@@@@@@@@@@@@@@@@ connection created. connection.verKey = ${connection.verkey} ');
+
+
       if (user.defaultMediatorId.isNotEmpty){
         ConnectionData connectionDB = await DBServices.getConnection(user.defaultMediatorId);
         Connection mediatorConnection = Connection.fromJson(jsonDecode(connectionDB.connection));
-        await KeylistUpdateService.sendKeylistUpdateRequest(user, mediatorConnection, invitation: invitation, verkey: connection.verkey);
+        await KeylistUpdateService.sendKeylistUpdateRequest(user, mediatorConnection, verkey: connection.verkey);
       }
 
 
@@ -77,6 +80,9 @@ class ConnectionService {
       connection.connection_state = ConnectionStates.REQUESTED.state;
 
       Keys keys = getKeys(connection, invitation: invitation);
+
+
+      print('@@@@@@@@@@@@@@@@@@@@@ Keys set. keys.senderVk = ${keys.senderVk} ');
 
       // var outboundMessage = createOutboundMessage(
       //   connection,
@@ -95,12 +101,28 @@ class ConnectionService {
         outboundPackMessage,
       );
 
+
+      print('@@@@@@@@@@@@@@@@@@@@@ Save connection to local DB. connection.verkey = ${connection.verkey} ');
+
       await DBServices.saveConnections(
         ConnectionData(
           connection.verkey,
           jsonEncode(connection),
         ),
       );
+
+
+      print('!!!!! CONNECTIONS IN ACCEPT INVITATION RIGHT AFTER CREATION ');
+      List<ConnectionData> dbConnections = await DBServices.getAllConnections();
+      List<Connection> connections = [];
+      dbConnections.forEach((element) {
+        connections.add(Connection.fromJson(jsonDecode(element.connection)));
+      });
+      print('^^^^^^^^^^^^^^^^^^^^^^^^ CONNECTIONS length = ${connections.length}');
+
+
+
+
 
       if (response.statusCode == 204)
         return false;
@@ -155,6 +177,9 @@ class ConnectionService {
     InboundMessage inboundMessage,
   ) async {
     try {
+
+      print('@@@@@@@@@@@@@@@@@@@@@ Accept response called. Inbound Message = ${inboundMessage}');
+
       var typeMessageObj = jsonDecode(inboundMessage.message);
 
       if (!typeMessageObj.containsKey('connection~sig')) {
@@ -167,16 +192,33 @@ class ConnectionService {
         jsonEncode(typeMessageObj['connection~sig']),
       );
 
-      ConnectionData connectionDb =
-          await DBServices.getConnection(inboundMessage.recipientVerkey);
 
+
+      print('@@@@@@@@@@@@@@@@@@@@@ Searching in local DB for connection by... InboundMessage.recipient key = ${inboundMessage.recipientVerkey}');
+
+      ConnectionData connectionDb = await DBServices.getConnection(inboundMessage.recipientVerkey);
       if (connectionDb.connectionId.isEmpty) {
-        throw ErrorDescription(
-            'Connection for verKey ${inboundMessage.recipientVerkey} not found!');
+        throw ErrorDescription('Connection for verKey ${inboundMessage.recipientVerkey} not found!');
       }
+      Connection connection = Connection.fromJson(jsonDecode(connectionDb.connection));
 
-      Connection connection =
-          Connection.fromJson(jsonDecode(connectionDb.connection));
+
+      print('@@@@@@@@@@@@@@@@@@@@@ Connection from db got. Connection.verkey = ${connection.verkey}');
+
+
+
+      // print('!!!!! CONNECTIONS IN ACCEPT RESPONSE ');
+      //
+      // List<ConnectionData> dbConnections = await DBServices.getAllConnections();
+      // List<Connection> connections = [];
+      // dbConnections.forEach((element) {
+      //   connections.add(Connection.fromJson(jsonDecode(element.connection)));
+      // });
+      // print('^^^^^^^^^^^^^^^^^^^^^^^^ CONNECTIONS length = ${connections.length}');
+      //
+      //
+
+
 
       var receivedMessage = await verify(
         user.walletConfig,
@@ -202,8 +244,13 @@ class ConnectionService {
 
       String trustPingMessage = createTrustPingMessage();
 
+
+      print('@@@@@@@@@@@@@@@@@@@@@ Before getting keys for packing. Connection.verkey = ${connection.verkey}');
+
       //Map<String, dynamic> outboundMessage = createOutboundMessage(connection, jsonDecode(trustPingMessage), simplePayload: true);
       Keys keys = getKeys(connection);
+
+      print('@@@@@@@@@@@@@@@@@@@@@ Keys are got. keys.senderVk = ${keys.senderVk}');
 
       var outboundPackMessage = await packMessage(
         user.walletConfig,
@@ -217,8 +264,10 @@ class ConnectionService {
         outboundPackMessage,
       );
 
+      print('@@@@@@@@@@@@@@@@@@@@@ TRUST PING RESPONSE => ${r.statusCode}');
 
-      print('TRUST PING RESPONSE => ${r.statusCode}');
+      if (r.statusCode == 204)
+        return true;
 
       await DBServices.updateConnection(
         ConnectionData(
@@ -324,6 +373,8 @@ class ConnectionService {
 
       print('FIRST KEY => ${createPairwiseDidResponse[0]}');
       print('SECOND KEY => ${createPairwiseDidResponse[1]}');
+
+      print('@@@@@@@@@@@@@@@@@@@@@ connection creation in progress. generated key = ${createPairwiseDidResponse[1]} ');
 
       PublicKey publicKey = new PublicKey(
         id: createPairwiseDidResponse[0] + "#1",

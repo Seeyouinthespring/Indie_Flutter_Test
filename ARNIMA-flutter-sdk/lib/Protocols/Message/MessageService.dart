@@ -45,7 +45,7 @@ class MessageService {
         user.walletCredentials,
         response.body,
       );
-      print('PICKED UP MESSAGE UNPACKED => ${jsonDecode(unpacked)}');
+      //print('PICKED UP MESSAGE UNPACKED => ${jsonDecode(unpacked)}');
 
       return jsonDecode(unpacked);
     } catch (e){

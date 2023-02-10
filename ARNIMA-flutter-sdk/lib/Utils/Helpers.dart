@@ -151,7 +151,7 @@ dynamic packMessage(
     var message;
 
 
-    print('PACKING ... => ${jsonEncode(outboundMessage)}');
+    //print('PACKING ... => ${jsonEncode(outboundMessage)}');
 
     //
     // String senderVk = outboundMessage['senderVk'];
@@ -201,11 +201,9 @@ dynamic packMessage(
       for (var routingKey in keys.routingKeys) {
 
         Object forwardMessage = createForwardMessage(keys.recipientKeys[0], message);
-        List<int> forwardMessageBuffer =
-            utf8.encode(jsonEncode(forwardMessage));
+        List<int> forwardMessageBuffer = utf8.encode(jsonEncode(forwardMessage));
         if (Platform.isIOS) {
-          forwardBufferMessage =
-              await channel.invokeMethod('packMessage', <String, dynamic>{
+          forwardBufferMessage = await channel.invokeMethod('packMessage', <String, dynamic>{
             'configJson': configJson,
             'credentialsJson': credentialsJson,
             'payload': jsonEncode(forwardMessage),
@@ -214,8 +212,7 @@ dynamic packMessage(
           });
           return message = forwardBufferMessage;
         } else {
-          forwardBufferMessage =
-              await channel.invokeMethod('packMessage', <String, dynamic>{
+          forwardBufferMessage = await channel.invokeMethod('packMessage', <String, dynamic>{
             'configJson': configJson,
             'credentialJson': credentialsJson,
             'payload': forwardMessageBuffer,
