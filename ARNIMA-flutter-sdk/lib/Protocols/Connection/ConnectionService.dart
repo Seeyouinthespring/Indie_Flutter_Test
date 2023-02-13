@@ -266,15 +266,18 @@ class ConnectionService {
 
       print('@@@@@@@@@@@@@@@@@@@@@ TRUST PING RESPONSE => ${r.statusCode}');
 
-      if (r.statusCode == 204)
-        return true;
-
       await DBServices.updateConnection(
         ConnectionData(
           connectionDb.connectionId,
           jsonEncode(connection),
         ),
       );
+
+      print('@@@@@@@@@@@@@@@@@@@@@ CONNECTION UPDATED');
+
+      if (r.statusCode == 204)
+        return true;
+
 
       await DBServices.storeTrustPing(
         TrustPingData(
@@ -284,6 +287,10 @@ class ConnectionService {
           TrustPingState.SENT.state,
         ),
       );
+
+
+      List<TrustPingData> data = await DBServices.getTrustPingRecords();
+
       return true;
     } catch (exception) {
       throw exception;

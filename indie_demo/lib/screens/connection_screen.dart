@@ -69,6 +69,7 @@ class _ConnectionScreenState extends State<ConnectionScreen>
 
   getMessage() async {
     await progressIndicator.show();
+    print('@@@@@@@@@@@@@@@@@@@@@ Pickup message called ');
     var message = await AriesFlutterMobileAgent.pickupMessage();
     await progressIndicator.hide();
 

@@ -485,11 +485,7 @@ class AriesFlutterMobileAgent {
         senderVerkey: message['sender_verkey'],
       ),
     );
-    if (connection != null) {
-      await DBServices.removeMessage(dbMessages[i].messageId);
-    }
-    emitterAriesSdk.emit("SDKEvent", null,
-        "You are now connected with ${connection.theirLabel}");
+    emitterAriesSdk.emit("SDKEvent", null, "You are now connected with ${connection.theirLabel}");
   }
 
   static presentationAckType(WalletData user, Map<String, dynamic> message,
@@ -555,16 +551,9 @@ class AriesFlutterMobileAgent {
 
   static Future pickupMessage() async {
     try {
-      //WalletData user = await DBServices.getWalletData();
-
-      print('IM HERE 1');
-
       dynamic message = await MessageService.pickupMessage();
-      print('IM HERE 2');
       await handleMessage(message);
-      print('IM HERE 3');
       return message;
-
     } catch (exception) {
       print("Exception in pickupMessage $exception");
       throw exception;
@@ -591,12 +580,9 @@ class AriesFlutterMobileAgent {
     );
 
     Map<String, dynamic> jsonMessage = jsonDecode(unPackMessageResponse);
-
-    print('@@@@@@@@@@@@@@@@@@@@@ Message unpacked. Json message = ${jsonMessage}');
-
     switch (jsonDecode(jsonMessage['message'])['@type']) {
       case MessageType.ConnectionResponse:
-        connectionRsponseType(user, jsonMessage);
+        await connectionRsponseType(user, jsonMessage);
         break;
       case MessageType.ConnectionRequest:
         connectionRequestType(user, message);
@@ -605,10 +591,7 @@ class AriesFlutterMobileAgent {
         trustPingMessageType(user, message);
         break;
       case MessageType.TrustPingResponseMessage:
-
-        print('I AM IN THE TRUST PING MESSAGE RESPONSE HANDLER !!!');
-
-        trustPingMessageResponseType(user, message);
+        await trustPingMessageResponseType(user, jsonMessage);
         break;
       case MessageType.OfferCredential:
         offerCredentialType(user, message);

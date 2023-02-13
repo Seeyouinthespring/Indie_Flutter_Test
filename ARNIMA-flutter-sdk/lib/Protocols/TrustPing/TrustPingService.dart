@@ -49,19 +49,24 @@ class TrustPingService {
 
   static saveTrustPingResponse(InboundMessage inboundMessage) async {
     try {
-      ConnectionData connectionDB =
-          await DBServices.getConnection(inboundMessage.recipientVerkey);
-      Connection connection =
-          Connection.fromJson(jsonDecode(connectionDB.connection));
+      ConnectionData connectionDB = await DBServices.getConnection(inboundMessage.recipientVerkey);
+      Connection connection = Connection.fromJson(jsonDecode(connectionDB.connection));
       var message = jsonDecode(inboundMessage.message);
       var trustPingId = message['~thread']['thid'];
       TrustPingData trustPing = TrustPingData(
-        '',
+        connectionDB.connectionId,
         trustPingId,
-        '',
+        inboundMessage.message,
         TrustPingState.ACTIVE.state,
       );
       await DBServices.storeTrustPing(trustPing);
+
+
+      print('I called pings!!!!');
+
+      List<TrustPingData> pings = await DBServices.getTrustPingRecords();
+
+      print('I got pings!!!!');
       return connection;
     } catch (exception) {
       print('exception in saveTrustPingResponse $exception');
