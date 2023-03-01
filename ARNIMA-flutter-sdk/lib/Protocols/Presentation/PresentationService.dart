@@ -20,10 +20,9 @@ class PresentationService {
     InboundMessage inboundMessage,
   ) async {
     try {
-      ConnectionData connectionDB =
-          await DBServices.getConnection(inboundMessage.recipientVerkey);
-      Connection connection =
-          Connection.fromJson(jsonDecode(connectionDB.connection));
+      ConnectionData connectionDB = await DBServices.getConnection(inboundMessage.recipientVerkey);
+      Connection connection = Connection.fromJson(jsonDecode(connectionDB.connection));
+
       var message = jsonDecode(inboundMessage.message);
       var presentationRequest = message['request_presentations~attach'];
       var proofRequest = decodeBase64(presentationRequest[0]['data']['base64']);
@@ -68,10 +67,8 @@ class PresentationService {
       InboundMessage inboundMessage) async {
     try {
       WalletData sdkDB = await DBServices.getWalletData();
-      ConnectionData connectionDB =
-          await DBServices.getConnection(inboundMessage.recipientVerkey);
-      Connection connection =
-          Connection.fromJson(jsonDecode(connectionDB.connection));
+      ConnectionData connectionDB = await DBServices.getConnection(inboundMessage.recipientVerkey);
+      Connection connection = Connection.fromJson(jsonDecode(connectionDB.connection));
 
       var message = inboundMessage.message;
 
@@ -109,9 +106,6 @@ class PresentationService {
         message['@id'],
       );
 
-      // var outboundMessage = createOutboundMessage(
-      //     connection, creatPresentationMessageObject
-      // );
       Keys keys = getKeys(connection);
 
       var outboundPackMessage = await packMessage(

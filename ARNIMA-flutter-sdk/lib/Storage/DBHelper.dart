@@ -146,27 +146,18 @@ class DBServices {
 
   static Future<List<TrustPingData>> getTrustPingRecords() async {
     try {
-
-
       Box _trustPing;
       if (_trustPing == null || !_trustPing.isOpen) {
         _trustPing = await Hive.openBox('trustPing');
       } else {
         _trustPing = Hive.box('trustPing');
       }
-
       List<TrustPingData> records = [];
       for (int i = 0; i < _trustPing.length; i++) {
         var map = _trustPing.getAt(i);
         records.add(map);
       }
-
-      print('I have some records !!!! ${records.length}');
-
       return records;
-
-
-
     } catch (exception) {
       throw exception;
     }

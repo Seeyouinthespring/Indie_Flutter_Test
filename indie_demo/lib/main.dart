@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:AriesFlutterMobileAgent/Agent/AriesFlutterMobileAgent.dart';
 import 'package:AriesFlutterMobileAgent/Storage/DBModels.dart';
 import 'package:flutter/material.dart';
+import 'package:indie_demo/routes.dart';
 import 'package:indie_demo/screens/connect_mediator_screen.dart';
 import 'package:indie_demo/screens/connection_detail_screen.dart';
 import 'package:indie_demo/screens/connection_screen.dart';
@@ -69,6 +70,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Agent',
+      onGenerateRoute: Routes.onGenerateRoute,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
@@ -80,7 +82,7 @@ class _MyAppState extends State<MyApp> {
       routes: {
         ConnectMediatorScreen.routeName: (ctx) => ConnectMediatorScreen(),
         ConnectionScreen.routeName: (ctx) => ConnectionScreen(),
-        ConnectionDetailScreen.routeName: (ctx) => ConnectionDetailScreen(),
+        //ConnectionDetailScreen.routeName: (ctx) => ConnectionDetailScreen(),
         QRcodeScreen.routeName: (ctx) => QRcodeScreen(),
       },
     );

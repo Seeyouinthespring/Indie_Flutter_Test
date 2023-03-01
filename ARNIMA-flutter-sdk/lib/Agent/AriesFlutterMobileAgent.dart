@@ -194,9 +194,18 @@ class AriesFlutterMobileAgent {
 
   static Future<List<CredentialData>> getAllCredentials() async {
     try {
-      List<CredentialData> credentialList =
-          await DBServices.getAllCredentials();
+      List<CredentialData> credentialList = await DBServices.getAllCredentials();
       return credentialList;
+    } catch (exception) {
+      print("Error getAllCredentials $exception");
+      throw exception;
+    }
+  }
+
+  static Future<List<PresentationData>> getAllPresentations() async {
+    try {
+      List<PresentationData> presentationList = await DBServices.getAllPresentations();
+      return presentationList;
     } catch (exception) {
       print("Error getAllCredentials $exception");
       throw exception;
@@ -208,8 +217,7 @@ class AriesFlutterMobileAgent {
       InboundMessage inboundMessage = InboundMessage.fromJson(
         jsonDecode(message),
       );
-      bool response =
-          await CredentialService.createCredentialRequest(inboundMessage);
+      bool response = await CredentialService.createCredentialRequest(inboundMessage);
       if (response) {
         await DBServices.removeMessage(messageId);
       }
@@ -238,11 +246,9 @@ class AriesFlutterMobileAgent {
     }
   }
 
-  static Future<List<PresentationData>> getPresentationByConnectionId(
-      String recipientVerkey) async {
+  static Future<List<PresentationData>> getPresentationByConnectionId(String recipientVerkey) async {
     try {
-      List<PresentationData> presentationList =
-          await DBServices.getPresentationByConnectionId(recipientVerkey);
+      List<PresentationData> presentationList = await DBServices.getPresentationByConnectionId(recipientVerkey);
       return presentationList;
     } catch (exception) {
       print("Error getPresentationByConnectionId $exception");
@@ -255,8 +261,7 @@ class AriesFlutterMobileAgent {
       InboundMessage inboundMessage = InboundMessage.fromJson(
         jsonDecode(message),
       );
-      bool response =
-          await PresentationService.createPresentProofRequest(inboundMessage);
+      bool response = await PresentationService.createPresentProofRequest(inboundMessage);
       if (response) {
         await DBServices.removeMessage(messageId);
       }
@@ -265,6 +270,11 @@ class AriesFlutterMobileAgent {
       throw exception;
     }
   }
+
+  static Future removeMessage(String messageId) async {
+    await DBServices.removeMessage(messageId);
+  }
+
 
   static Future socketInit() async {
     String url = await DBServices.getServiceEndpoint();
@@ -355,18 +365,18 @@ class AriesFlutterMobileAgent {
                     trustPingMessageResponseType(user, message,
                         dbMessages: dbMessages, i: i);
                     break;
-                  case MessageType.OfferCredential:
-                    offerCredentialType(user, message,
-                        dbMessages: dbMessages, i: i);
-                    break;
+                  // case MessageType.OfferCredential:
+                  //   offerCredentialType(user, message,
+                  //       dbMessages: dbMessages, i: i);
+                  //   break;
                   case MessageType.IssueCredential:
                     issueCredentialType(user, message,
                         dbMessages: dbMessages, i: i);
                     break;
-                  case MessageType.RequestPresentation:
-                    requestPresentationType(user, message,
-                        dbMessages: dbMessages, i: i);
-                    break;
+                  // case MessageType.RequestPresentation:
+                  //   requestPresentationType(user, message,
+                  //       dbMessages: dbMessages, i: i);
+                  //   break;
                   case MessageType.PresentationAck:
                     presentationAckType(user, message,
                         dbMessages: dbMessages, i: i);
@@ -491,16 +501,21 @@ class AriesFlutterMobileAgent {
   static presentationAckType(WalletData user, Map<String, dynamic> message,
       {List<MessageData> dbMessages = const [], int i = 0}) async {
     try {
-      await DBServices.removeMessage(dbMessages[i].messageId);
+      if (dbMessages.isNotEmpty)
+        await DBServices.removeMessage(dbMessages[i].messageId);
+
+
+      print('PresentationAckType is called');
+
     } catch (exception) {
       throw exception;
     }
   }
 
-  static requestPresentationType(WalletData user, Map<String, dynamic> message,
+  static requestPresentationType(String messageId, WalletData user, Map<String, dynamic> message,
       {List<MessageData> dbMessages = const [], int i = 0}) async {
     var connection = await PresentationService.receivePresentProofRequest(
-      dbMessages[i].messageId,
+      messageId,
       InboundMessage(
         message: message['message'],
         recipientVerkey: message['recipient_verkey'],
@@ -520,15 +535,20 @@ class AriesFlutterMobileAgent {
         senderVerkey: message['sender_verkey'],
       ),
     );
-    if (isCompleted) {
-      await DBServices.removeMessage(dbMessages[i].messageId);
-    }
+    // if (isCompleted) {
+    //   await DBServices.removeMessage(dbMessages[i].messageId);
+    // }
   }
 
-  static offerCredentialType(WalletData user, Map<String, dynamic> message,
+  static offerCredentialType(String messageId, WalletData user, Map<String, dynamic> message,
       {List<MessageData> dbMessages = const [], int i = 0}) async {
+
+
+    print('!!!!!!!!!!!!!!!!!!! OfferCredential message handler method started to work');
+    
     var connection = await CredentialService.receiveCredential(
-      dbMessages[i].messageId,
+      messageId,
+      user,
       InboundMessage(
         message: message['message'],
         recipientVerkey: message['recipient_verkey'],
@@ -561,7 +581,6 @@ class AriesFlutterMobileAgent {
   }
 
   static Future handleMessage(dynamic message) async {
-
     print('@@@@@@@@@@@@@@@@@@@@@ Handling pickedup message');
     var messageValues = new Map<String, dynamic>.from(jsonDecode(message['message']));
     List messagesAttached = messageValues['messages~attach'] as List;
@@ -573,44 +592,61 @@ class AriesFlutterMobileAgent {
 
     WalletData user = await DBServices.getWalletData();
 
-    var unPackMessageResponse = await unPackMessage(
+    messagesAttached.forEach((attached) async {
+      var unPackMessageResponse = await unPackMessage(
         user.walletConfig,
         user.walletCredentials,
-        jsonEncode(messagesAttached[0]['message'])
-    );
+        jsonEncode(attached['message']),
+      );
+      Map<String, dynamic> jsonMessage = jsonDecode(unPackMessageResponse);
+      await executeMessageType(
+        messageValues['@id'],
+        user,
+        jsonMessage,
+      );
+    });
+  }
 
-    Map<String, dynamic> jsonMessage = jsonDecode(unPackMessageResponse);
+
+
+
+  static Future<void> executeMessageType(messageId, WalletData user, Map<String, dynamic> jsonMessage) async {
     switch (jsonDecode(jsonMessage['message'])['@type']) {
       case MessageType.ConnectionResponse:
         await connectionRsponseType(user, jsonMessage);
         break;
       case MessageType.ConnectionRequest:
-        connectionRequestType(user, message);
+        await connectionRequestType(user, jsonMessage);
         break;
       case MessageType.TrustPingMessage:
-        trustPingMessageType(user, message);
+        await trustPingMessageType(user, jsonMessage);
         break;
       case MessageType.TrustPingResponseMessage:
         await trustPingMessageResponseType(user, jsonMessage);
         break;
       case MessageType.OfferCredential:
-        offerCredentialType(user, message);
+        await offerCredentialType(messageId, user, jsonMessage);
         break;
       case MessageType.IssueCredential:
-        issueCredentialType(user, message);
+        await issueCredentialType(user, jsonMessage);
         break;
       case MessageType.RequestPresentation:
-        requestPresentationType(user, message);
+        await requestPresentationType(messageId, user, jsonMessage);
         break;
       case MessageType.PresentationAck:
-        presentationAckType(user, message);
+        await presentationAckType(user, jsonMessage);
         break;
       case MessageType.BatchMessage:
-        print('BATCH MESSAGE HANDLING => ${messagesAttached}');
-        print('BATCH MESSAGE HANDLING => ${messagesAttached.length}');
+        print('this is ${MessageType.BatchMessage}. I dont know what to do');
+        break;
+      case MessageType.ProblemReport:
+        print( 'HUSTON, WE VE GOT PROBLEM (REPORT) : $jsonMessage');
+        await removeMessage(jsonMessage["message"]["problem_items"][0]["~thread"]["thid"]);
         break;
       default:
-        print('In Default Case, ${messageValues['@type']}');
+        print('In Default Case, ${jsonDecode(jsonMessage['message'])['@type']}');
     }
   }
+
+
 }

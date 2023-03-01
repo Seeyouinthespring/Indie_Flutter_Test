@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io' as io;
 
 import 'package:barcode_scan/barcode_scan.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,7 @@ import 'package:indie_demo/screens/qrcode_screen.dart';
 import 'package:indie_demo/widgets/custom_dialog_box.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 
-import 'connection_detail_screen.dart';
+import '../routes.dart';
 
 class ConnectionScreen extends StatefulWidget {
   static const routeName = '/connections';
@@ -75,6 +76,20 @@ class _ConnectionScreenState extends State<ConnectionScreen>
 
     print('GOT MESSAGE => $message');
 
+  }
+
+  checkFile() async {
+    String path1 = 'file:///root/.indy_client/blobs/DBNiivhQomkYb9swE1pX1y_3_CL_1510_TAG1/42XnLCRYWRv8XBHMmjSsyUwLebwANRey3TmGywTicBg8';
+    String path2 = 'file:///root/.indy_client/blobs/DBNiivhQomkYb9swE1pX1y_3_CL_1510_TAG1/42XnLCRYWRv8XBHMmjSsyUwLebwANRey3TmGywTicBg8';
+    String dir1 = 'file:///root/.indy_client/blobs/DBNiivhQomkYb9swE1pX1y_3_CL_1510_TAG1';
+    String dir2 = 'file:///root/.indy_client/blobs';
+    String dir3 = 'file:///root/.indy_client';
+
+    print('path1 => ${io.File(path1).existsSync()}');
+    print('path2 => ${io.File(path2).existsSync()}');
+    print('dir1 => ${io.Directory(dir1).existsSync()}');
+    print('dir2 => ${io.Directory(dir2).existsSync()}');
+    print('dir3 => ${io.Directory(dir3).existsSync()}');
   }
 
   showAlertDialog(invitation) {
@@ -171,10 +186,17 @@ class _ConnectionScreenState extends State<ConnectionScreen>
   }
 
   Future getAllCredentials() async {
+    print('Connection screen. getAllCredentials called');
     try {
       progressIndicator.show();
-      List<dynamic> credentials =
-          await AriesFlutterMobileAgent.listAllCredentials(filter: {});
+      List<dynamic> credentials = await AriesFlutterMobileAgent.listAllCredentials(filter: {});
+      var presentations = await AriesFlutterMobileAgent.getAllPresentations();
+      var creds = await AriesFlutterMobileAgent.getAllCredentials();
+
+      print('PRESENTATIONS LENGTH => ${presentations.length}');
+      print('CREDS LENGTH => ${creds.length}');
+      print('CREDENTIALS LENGTH => ${credentials.length}');
+
       progressIndicator.hide();
       setState(() {
         credentialList = credentials;
@@ -186,9 +208,13 @@ class _ConnectionScreenState extends State<ConnectionScreen>
   }
 
   Future getAllActionMessages() async {
+    print('Connection screen. getAllActionMessages called');
     try {
-      List<dynamic> messages =
-          await AriesFlutterMobileAgent.getAllActionMessages();
+      List<dynamic> messages = await AriesFlutterMobileAgent.getAllActionMessages();
+
+      print('ACTION MESSAGES LENGTH => ${messages.length}');
+
+
       setState(() {
         messageList = messages;
       });
@@ -207,11 +233,15 @@ class _ConnectionScreenState extends State<ConnectionScreen>
   }
 
   void navigateToConnectionDetail(connection) {
-    Navigator.pushNamed(
-      context,
-      ConnectionDetailScreen.routeName,
-      arguments: ConnectionDetailArguments(connection),
-    );
+
+    print('Connection screen. navigateToConnectionDetails called');
+    Navigator.of(context).pushNamed(Routes.connectionDetail, arguments: ConnectionDetailArguments(connection));
+
+    // Navigator.pushNamed(
+    //   context,
+    //   ConnectionDetailScreen.routeName,
+    //   arguments: ConnectionDetailArguments(connection),
+    // );
   }
 
   @override
@@ -272,6 +302,11 @@ class _ConnectionScreenState extends State<ConnectionScreen>
                   RaisedButton(
                     onPressed: addNewConnection,
                     child: Text('--> Add new Connection'),
+                    color: Colors.blue[200],
+                  ),
+                  RaisedButton(
+                    onPressed: checkFile,
+                    child: Text('CHECK FILE AND DIRECTORY '),
                     color: Colors.blue[200],
                   ),
                   RaisedButton(
@@ -356,8 +391,7 @@ class _ConnectionScreenState extends State<ConnectionScreen>
                                 color: Colors.amber,
                               ),
                             ),
-                            title: Text(credentialList[index]['cred_def_id']
-                                .split(':')[4]),
+                            title: Text(credentialList[index]['cred_def_id'].split(':')[4]),
                             contentPadding: EdgeInsets.all(7),
                             trailing: GestureDetector(
                               onTap: () => showDialog(
@@ -408,12 +442,8 @@ class _ConnectionScreenState extends State<ConnectionScreen>
                         if (messageList.length == 0) {
                           return Text('You dont have any messages');
                         }
-                        if (jsonDecode(messageList[index].messages)['message']
-                                ['@type'] ==
-                            "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/offer-credential") {
-                          List<dynamic> attributes =
-                              jsonDecode(messageList[index].messages)['message']
-                                  ['credential_preview']['attributes'];
+                        if (jsonDecode(messageList[index].messages)['message']['@type'] == "https://didcomm.org/issue-credential/1.0/offer-credential") {
+                          List<dynamic> attributes = jsonDecode(messageList[index].messages)['message']['credential_preview']['attributes'];
                           return Card(
                             shadowColor: Colors.grey,
                             child: ListTile(
@@ -425,7 +455,7 @@ class _ConnectionScreenState extends State<ConnectionScreen>
                                   color: Colors.amber,
                                 ),
                               ),
-                              title: Text('Credential'),
+                              title: Text('${jsonDecode(messageList[index].messages)['message']['comment']}'),
                               subtitle: Text('state'),
                               contentPadding: EdgeInsets.all(7),
                               trailing: GestureDetector(
@@ -460,46 +490,25 @@ class _ConnectionScreenState extends State<ConnectionScreen>
                             ),
                           );
                         }
-                        if (jsonDecode(messageList[index].messages)['message']
-                                ['@type'] ==
-                            "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/request-presentation") {
-                          var base64Data =
-                              jsonDecode(messageList[index].messages)['message']
-                                      ['request_presentations~attach'][0]
-                                  ['data']['base64'];
-                          Map<String, dynamic> proofData =
-                              jsonDecode(decodeBase64(base64Data));
+                        if (jsonDecode(messageList[index].messages)['message']['@type'] == "https://didcomm.org/present-proof/1.0/request-presentation") {
+                          var base64Data = jsonDecode(messageList[index].messages)['message']['request_presentations~attach'][0]['data']['base64'];
+                          Map<String, dynamic> proofData = jsonDecode(decodeBase64(base64Data));
                           log(proofData.toString());
-                          List keys =
-                              proofData['requested_attributes'].keys.toList();
-                          List predicatesKeys =
-                              proofData['requested_predicates'].keys.toList();
+                          List keys = proofData['requested_attributes'].keys.toList();
+                          List predicatesKeys = proofData['requested_predicates'].keys.toList();
                           List attrsData = [];
                           keys.asMap().forEach((index, key) {
                             var data = {
-                              "name": proofData['requested_attributes'][key]
-                                      ['restrictions'][0]['cred_def_id']
-                                  .split(':')[4],
-                              "value": proofData['requested_attributes'][key]
-                                  ['name']
+                              "name": proofData['requested_attributes'][key]['restrictions'][0]['cred_def_id'].split(':')[4],
+                              "value": proofData['requested_attributes'][key]['name']
                             };
                             attrsData.add(data);
                           });
                           predicatesKeys.asMap().forEach((index, key) {
                             var data = {
-                              "name": proofData['requested_predicates'][key]
-                                      ['restrictions'][0]['cred_def_id']
-                                  .split(':')[4],
+                              "name": proofData['requested_predicates'][key]['restrictions'][0]['cred_def_id'].split(':')[4],
                               "value": proofData['requested_predicates'][key]
-                                      ['name'] +
-                                  " " +
-                                  proofData['requested_predicates'][key]
-                                          ['p_type']
-                                      .toString() +
-                                  " " +
-                                  proofData['requested_predicates'][key]
-                                          ['p_value']
-                                      .toString()
+                                      ['name'] + " " + proofData['requested_predicates'][key]['p_type'].toString() + " " + proofData['requested_predicates'][key]['p_value'].toString()
                             };
                             attrsData.add(data);
                           });
@@ -514,8 +523,8 @@ class _ConnectionScreenState extends State<ConnectionScreen>
                                   color: Colors.amber,
                                 ),
                               ),
-                              title: Text('Presentation'),
-                              subtitle: Text('state'),
+                              title: Text("Pres ${jsonDecode(messageList[index].messages)['message']['@id']}"),
+                              subtitle: Text('${proofData['name']}'),
                               contentPadding: EdgeInsets.all(7),
                               trailing: GestureDetector(
                                 onTap: () => showDialog(

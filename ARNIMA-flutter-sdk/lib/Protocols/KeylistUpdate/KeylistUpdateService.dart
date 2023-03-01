@@ -17,21 +17,9 @@ class KeylistUpdateService {
 
   static Future<dynamic> sendKeylistUpdateRequest(WalletData user, Connection connection, {InvitationDetails invitation, String verkey = ''}) async {
     try{
-
-      print('KEY LIST UPDATE CALLED');
-
       Map<String, dynamic> keylistUpdateMessage = createKeylistUpdateMessage(verkey.isEmpty ? connection.verkey: verkey);
-      //Map<String, dynamic> outboundKeylistUpdateMessage = createOutboundMessage(connection, keylistUpdateMessage, simplePayload: true, invitation: invitation);
-      //print('Outbound keylist message => ${jsonEncode(outboundKeylistUpdateMessage)}');
 
       Keys keys = getKeys(connection, invitation: invitation);
-
-
-      // print('KEY LIST UPDATE keys  recipirnt keys=> ${keys.recipientKeys}');
-      // print('KEY LIST UPDATE keys routing keys => ${keys.routingKeys}');
-      // print('KEY LIST UPDATE keys endpoint => ${keys.endpoint}');
-      // print('KEY LIST UPDATE keys senderVk => ${keys.senderVk}');
-
 
       var outboundPackKeylistUpdateMessage = await packMessage(
         user.walletConfig,
@@ -63,10 +51,8 @@ class KeylistUpdateService {
 
   static Future<dynamic> sendMediateRequest(WalletData user, Connection connection, {InvitationDetails invitation, String verkey = ''}) async {
     try{
-
-      print('MEDIATE REQUEST CALLED');
-
-      Map<String, dynamic> mediateRequestMessage = createMediateRequestMessage();// createKeylistUpdateMessage(verkey.isEmpty ? connection.verkey: verkey);
+      Map<String, dynamic> mediateRequestMessage = createMediateRequestMessage();
+      // createKeylistUpdateMessage(verkey.isEmpty ? connection.verkey: verkey);
       //Map<String, dynamic> outboundMediateRequestMessage = createOutboundMessage(connection, mediateRequestMessage, simplePayload: true, invitation: invitation);
       //print('Outbound mediate request message => ${jsonEncode(outboundMediateRequestMessage)}');
 

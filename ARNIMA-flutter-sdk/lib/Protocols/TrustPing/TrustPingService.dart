@@ -17,8 +17,7 @@ import 'TrustPingState.dart';
 class TrustPingService {
   static Future<bool> sendTrustPingResponse(String connectionId) async {
     try {
-      ConnectionData connectionDB =
-          await DBServices.getConnection(connectionId);
+      ConnectionData connectionDB = await DBServices.getConnection(connectionId);
       var connection = jsonDecode(connectionDB.connection);
       var trustPingMessage = createTrustPingMessage();
       TrustPingData trustPing = TrustPingData(
@@ -31,9 +30,12 @@ class TrustPingService {
 
       Keys keys = getKeys(connection);
 
-      //Map<String, dynamic> outboundMessage = createOutboundMessage(connection, jsonDecode(trustPingMessage));
       var outboundPackMessage = await packMessage(
-          sdkDB.walletConfig, sdkDB.walletCredentials, jsonDecode(trustPingMessage), keys);
+          sdkDB.walletConfig,
+          sdkDB.walletCredentials,
+          jsonDecode(trustPingMessage),
+          keys
+      );
 
       await outboundAgentMessagePost(
         keys.endpoint,
@@ -60,13 +62,6 @@ class TrustPingService {
         TrustPingState.ACTIVE.state,
       );
       await DBServices.storeTrustPing(trustPing);
-
-
-      print('I called pings!!!!');
-
-      List<TrustPingData> pings = await DBServices.getTrustPingRecords();
-
-      print('I got pings!!!!');
       return connection;
     } catch (exception) {
       print('exception in saveTrustPingResponse $exception');
@@ -80,20 +75,18 @@ class TrustPingService {
     InboundMessage inboundMessage,
   ) async {
     try {
-      ConnectionData connectionDB =
-          await DBServices.getConnection(inboundMessage.recipientVerkey);
+      ConnectionData connectionDB = await DBServices.getConnection(inboundMessage.recipientVerkey);
       var connection = jsonDecode(connectionDB.connection);
       var parsedMessage = jsonDecode(inboundMessage.message);
       if (connection.state != ConnectionStates.COMPLETE.state) {
         connection.state = ConnectionStates.COMPLETE.state;
         connection.updatedAt = new DateTime.now();
       }
-      ConnectionData storeDataintoDB =
-          ConnectionData(connectionDB.connectionId, jsonEncode(connection));
+      ConnectionData storeDataintoDB = ConnectionData(connectionDB.connectionId, jsonEncode(connection));
 
       if (parsedMessage['response_requested']) {
         var reply = createTrustPingResponseMessage(parsedMessage['@id']);
-        //Map<String, dynamic> outboundMessage = createOutboundMessage(connection, reply);
+
         Keys keys = getKeys(connection);
         var outboundPackMessage = await packMessage(
           configJson,

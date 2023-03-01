@@ -17,7 +17,7 @@ class ConnectWithMediatorService {
   static const MethodChannel _channel =
       const MethodChannel('AriesFlutterMobileAgent');
 
-  static Future<String> connectWithMediator(   // it returned bool originally
+  static Future<String> connectWithMediator(
     String url,
     String apiBody,
     String configJson,
@@ -25,15 +25,8 @@ class ConnectWithMediatorService {
     String poolConfig,
   ) async {
     try {
-
-      //var incomingRouterResponse = await postData(url, apiBody);// how it was
-
       String incomingRouterResponseString = await getStringData(url);
       var incomingRouterResponse =  jsonDecode(utf8.decode(base64.decode(base64.normalize(incomingRouterResponseString.split('=')[1]))));
-
-      print('INCOMING ROUTE RESPONSE ========> ${incomingRouterResponse} ');
-
-      //var incomingRouterResponse = jsonDecode(await getData(url)); // how it can work
 
       var user = await DBServices.getWalletData();
       await DBServices.updateWalletData(

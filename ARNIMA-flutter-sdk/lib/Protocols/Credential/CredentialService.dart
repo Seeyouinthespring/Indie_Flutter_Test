@@ -10,6 +10,7 @@ import 'package:AriesFlutterMobileAgent/Protocols/Credential/CredentialState.dar
 import 'package:AriesFlutterMobileAgent/Utils/Helpers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart';
 
 import '../../AriesAgent.dart';
 import '../../NetworkServices/Network.dart';
@@ -53,9 +54,6 @@ class CredentialService {
       );
 
       if (credentialProposalMsg != null) {
-        // var outboundMessage =
-        //     createOutboundMessage(connectionValues, credentialProposalMsg);
-
         Keys keys = getKeys(connectionValues);
 
         var outboundPackMessage =
@@ -90,18 +88,13 @@ class CredentialService {
   ) async {
     try {
       WalletData sdkDB = await DBServices.getUserData();
+      ConnectionData connection = await DBServices.getConnection(inboundMessage.recipientVerkey);
+      Connection connectionValues = Connection.fromJson(jsonDecode(connection.connection));
 
-      ConnectionData connection =
-          await DBServices.getConnection(inboundMessage.recipientVerkey);
 
-      Connection connectionValues =
-          Connection.fromJson(jsonDecode(connection.connection));
       var message = inboundMessage.message;
-
       var offersAttach = jsonDecode(jsonEncode(message['offers~attach']));
-
-      var credOfferJson =
-          await jsonDecode(decodeBase64(offersAttach[0]['data']['base64']));
+      var credOfferJson = await jsonDecode(decodeBase64(offersAttach[0]['data']['base64']));
 
       var credDefJson = await channel.invokeMethod(
         'getCredDef',
@@ -122,15 +115,10 @@ class CredentialService {
           'masterSecretId': await DBServices.getMasterSecretId()
         },
       );
-
-      if (!message.containsKey('~thread')) {
-        throw new ErrorDescription('Thread is not present!');
-      }
-
       var thread = jsonDecode(jsonEncode(message['~thread']));
 
       String threadId;
-      if (thread != null) {
+      if (thread == null) {
         threadId = message['@id'];
       } else {
         threadId = message['~thread']['thid'];
@@ -152,7 +140,7 @@ class CredentialService {
         ),
       );
 
-      if (thread.length > 0) {
+      if (thread != null) {
         issuecredential.updatedAt = new DateTime.now().toString();
       } else {
         issuecredential.createdAt = new DateTime.now().toString();
@@ -164,11 +152,6 @@ class CredentialService {
         threadId,
       );
 
-      // var outboundMessage = createOutboundMessage(
-      //   connectionValues,
-      //   credentialRequestMessage
-      // );
-
       Keys keys = getKeys(connectionValues);
 
       var outboundPackMessage = await packMessage(
@@ -178,7 +161,7 @@ class CredentialService {
         keys,
       );
 
-      await outboundAgentMessagePost(
+      Response response = await outboundAgentMessagePost(
         keys.endpoint,
         outboundPackMessage,
       );
@@ -201,14 +184,12 @@ class CredentialService {
 
   static receiveCredential(
     String messageId,
+    WalletData user,
     InboundMessage inboundMessage,
   ) async {
     try {
-      ConnectionData connection =
-          await DBServices.getConnection(inboundMessage.recipientVerkey);
-
-      Connection connectionValues =
-          Connection.fromJson(jsonDecode(connection.connection));
+      ConnectionData connection = await DBServices.getConnection(inboundMessage.recipientVerkey);
+      Connection connectionValues = Connection.fromJson(jsonDecode(connection.connection));
 
       if (connection.connectionId.isEmpty) {
         throw ErrorDescription(
@@ -220,7 +201,7 @@ class CredentialService {
       var thread = jsonDecode(jsonEncode(message['~thread']));
 
       String threadId;
-      if (thread != null) {
+      if (thread == null) {
         threadId = message['@id'];
       } else {
         threadId = message['~thread']['thid'];
@@ -265,12 +246,8 @@ class CredentialService {
 
   static Future<bool> storeCredential(InboundMessage inboundMessage) async {
     try {
-      ConnectionData connection =
-          await DBServices.getConnection(inboundMessage.recipientVerkey);
-
-      Connection connectionValues =
-          Connection.fromJson(jsonDecode(connection.connection));
-
+      ConnectionData connection = await DBServices.getConnection(inboundMessage.recipientVerkey);
+      Connection connectionValues = Connection.fromJson(jsonDecode(connection.connection));
       if (connection.connectionId.isEmpty) {
         throw ErrorDescription(
             'Connection for verKey ${inboundMessage.recipientVerkey} not found!');
@@ -278,23 +255,18 @@ class CredentialService {
 
       var messageObject = jsonDecode(inboundMessage.message);
 
-      var issuecredentialRecordDB =
-          await DBServices.getissuecredential(messageObject['~thread']['thid']);
+      var issuecredentialRecordDB = await DBServices.getissuecredential(messageObject['~thread']['thid']);
 
-      var issuecredentialRecord =
-          jsonDecode(issuecredentialRecordDB.issuecredential);
+      var issuecredentialRecord = jsonDecode(issuecredentialRecordDB.issuecredential);
 
       var credentialsAttach = messageObject['credentials~attach'];
 
-      var credCertificate = await jsonDecode(
-          decodeBase64(credentialsAttach[0]['data']['base64']));
+      var credCertificate = await jsonDecode(decodeBase64(credentialsAttach[0]['data']['base64']));
 
       var revocRegDefJson;
 
-      if (credCertificate.containsKey('rev_reg_id') &&
-          credCertificate['rev_reg_id'] != null) {
-        revocRegDefJson = await channel.invokeMethod(
-            'getRevocRegDef', <String, dynamic>{
+      if (credCertificate.containsKey('rev_reg_id') && credCertificate['rev_reg_id'] != null) {
+        revocRegDefJson = await channel.invokeMethod('getRevocRegDef', <String, dynamic>{
           'submitterDid': connectionValues.did,
           'ID': credCertificate['rev_reg_id']
         });
@@ -302,13 +274,11 @@ class CredentialService {
 
       WalletData userData = await DBServices.getUserData();
 
-      var storedCredentialId =
-          await channel.invokeMethod('proverStoreCredential', <String, dynamic>{
+      var storedCredentialId = await channel.invokeMethod('proverStoreCredential', <String, dynamic>{
         'configJson': userData.walletConfig,
         'credentialJson': userData.walletCredentials,
         'credId': null,
-        'credReqMetadataJson':
-            issuecredentialRecord['credentialRequestMetadata'],
+        'credReqMetadataJson': issuecredentialRecord['credentialRequestMetadata'],
         'credJson': jsonEncode(credCertificate),
         'credDefJson': issuecredentialRecord['credDefJson'],
         'revRegDefJson': revocRegDefJson
@@ -318,8 +288,7 @@ class CredentialService {
         issuecredentialRecord['state'] = CredentialState.STATE_ACKED.state;
         issuecredentialRecord['revocRegId'] = credCertificate['rev_reg_id'];
         if (revocRegDefJson != null) {
-          issuecredentialRecord['revocRegDefJson'] =
-              jsonDecode(revocRegDefJson);
+          issuecredentialRecord['revocRegDefJson'] = jsonDecode(revocRegDefJson);
         } else {
           issuecredentialRecord['revocRegDefJson'] = null;
         }
@@ -328,11 +297,7 @@ class CredentialService {
       } else {
         throw ErrorDescription('Credential not able to store in your wallet');
       }
-      var credentialRequestMessage =
-          storedCredentialAckMessage(messageObject['~thread']['thid']);
-
-      // var outboundMessage = createOutboundMessage(
-      //   connectionValues, credentialRequestMessage);
+      var credentialRequestMessage = storedCredentialAckMessage(messageObject['~thread']['thid']);
 
       Keys keys = getKeys(connectionValues);
 
@@ -343,7 +308,7 @@ class CredentialService {
         keys,
       );
 
-      await outboundAgentMessagePost(
+      Response response = await outboundAgentMessagePost(
         keys.endpoint,
         outboundPackMessage,
       );

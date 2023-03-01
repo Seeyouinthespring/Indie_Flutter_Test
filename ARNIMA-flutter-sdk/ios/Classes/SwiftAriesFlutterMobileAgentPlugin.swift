@@ -864,7 +864,7 @@ class PresentProofService {
             while self.countRA < integerCountRA && self.invoked < 1 {
                 
                 let currentKeyForAttibute = requestedAttributesKeys![self.countRA] as? String
-                print("currentKeyForAttibute at \(self.countRA) ::: \(currentKeyForAttibute!)")
+                print("currentKeyForAttibute at \(self.countRA) ::: \(currentKeyForAttibute)")
                 var credentialsJson = ""
                 
                 self.proverFetchCredentialsForProof(currentKey: currentKeyForAttibute!, handlersForProof: handlersForProof) { (generatedCredentialsJson) in
@@ -924,7 +924,7 @@ class PresentProofService {
             let semaphoreOne = DispatchSemaphore(value: 0)
             while self.countPR < integerCountPR && self.invoked < 1 {
                 let currentKeyForPredicates = requestedPredicatesKeys![self.countPR] as? String
-                print("currentKeyForPredicates at \(self.countPR) ::: \(currentKeyForPredicates!)")
+                print("currentKeyForPredicates at \(self.countPR) ::: \(currentKeyForPredicates)")
                 var credentialsJson = ""
                 
                 self.proverFetchCredentialsForProof(currentKey: currentKeyForPredicates!, handlersForProof: handlersForProof) { (generatedCredentialsJson) in
@@ -983,7 +983,7 @@ class PresentProofService {
     private func proverFetchCredentialsForProof(currentKey: String, handlersForProof :HandlersForproof, handler: @escaping(_ result: String) -> ()){
         IndyAnoncreds.proverFetchCredentials(forProofReqItemReferent: currentKey, searchHandle: handlersForProof.searchCredentialHandler, count: NSNumber(value: 1)) { (errorfetchCredItemReferent, generatedCredentialsJson) in
             if ((errorfetchCredItemReferent as NSError?)?.code ?? 0) > 1 {
-                print("Error/ Success in fetch Cred for Item Referent \(errorfetchCredItemReferent!)")
+                print("Error/ Success in fetch Cred for Item Referent \(errorfetchCredItemReferent)")
                 handler("false")
             } else {
                 if let generatedCredentialsJson = generatedCredentialsJson{
@@ -1557,67 +1557,58 @@ class PresentProofService {
                 tailsHash = ((generatedRevocRegDefJsonData! as AnyObject).value(forKeyPath: "value.tailsHash") as? String)!
                 var tailsFileLocation: String = String()
                 tailsFileLocation = ((generatedRevocRegDefJsonData! as AnyObject).value(forKeyPath: "value.tailsLocation") as? String)!
-                print("Revoc RegDef tailsFileLocation \(tailsFileLocation)")
-                
-                let tailsFileLocationPath = tailsFileLocation.removingPercentEncoding!.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed)
-                
-                var url: URL?
-                
-                if let tailsFileLocationPath = tailsFileLocationPath {
-                    url = URL(string: tailsFileLocationPath)
-                } else {
-                    print("Issue with tails file path.")
-                    handler("false")
-                }
-                var urlData: Data? = nil
-                
-                if let url = url {
-                    urlData = try? Data(contentsOf: url)
-                } else {
-                    print("Issue with tails file url.")
-                    handler("false")
-                }
+
                 let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).map(\.path)
                 let documentsDirectory = paths[0]
-                let dataPath = URL(fileURLWithPath: documentsDirectory).appendingPathComponent("revoc").path
-                
-                if (urlData != nil) {
-                    if !FileManager.default.fileExists(atPath: dataPath) {
-                        do {
-                            try FileManager.default.createDirectory(atPath: dataPath, withIntermediateDirectories: false, attributes: nil)
-                        } catch {
-                        }
-                    }
-                    let filePath = "\(dataPath)/\(tailsHash)"
+
+                let arr = tailsFileLocation.components(separatedBy: "/")
+                let fileName = arr[arr.count - 1]
+                let folderName = arr[arr.count - 2]
+
+                let blobFolderPath = documentsDirectory + "/.indy_client/blobs/" + folderName
+                let blobFilePath = blobFolderPath + "/" + fileName
+
+                var downloadUrlString = URL.init(string: "https://develop.prove.api.ledgerleopard.com/\(folderName)/\(fileName)")
+                var downloadUrl: Data? = nil
+
+                do {
+                    downloadUrl = try! Data(contentsOf: downloadUrlString ?? URL.init(fileURLWithPath: ""))
+                } catch let error {
+                    print("download url Data error \(error)")
+                }
+
+                if !FileManager.default.fileExists(atPath: blobFilePath){
                     do {
-                        try urlData?.write(to: URL(fileURLWithPath: filePath))
-                        
-                    }catch let error {
-                        print("error \(error)")
+                        let pathToFolder = URL(string: "\(documentsDirectory)/.indy_client/blobs/\(folderName)")!
+                        try FileManager.default.createDirectory(atPath: pathToFolder.path, withIntermediateDirectories: true, attributes: nil)
+                    } catch let error {
+                        print("Cant create directory. Error -> \(error)")
                     }
-                    
-                    
-                    var pathOfTailsFile = "\(dataPath)/"
-                    pathOfTailsFile = URL(fileURLWithPath: pathOfTailsFile).standardized.path
-                    print("TailsFile Path \(pathOfTailsFile)")
-                    var tailsWriterConfig: [AnyHashable : Any] = [:]
-                    tailsWriterConfig["base_dir"] = pathOfTailsFile
-                    tailsWriterConfig["uri_pattern"] = ""
-                    
-                    var tailsWriterConfigData: Data? = nil
+
                     do {
-                        tailsWriterConfigData = try? JSONSerialization.data(withJSONObject: tailsWriterConfig, options: .prettyPrinted)
+                        try downloadUrl?.write(to: URL(fileURLWithPath: blobFilePath))
+                    } catch let error {
+                        print("AAAAA error \(error)")
                     }
-                    var tailsWriterConfigString: String? = nil
-                    if let tailsWriterConfigData = tailsWriterConfigData {
-                        tailsWriterConfigString = String(data: tailsWriterConfigData, encoding: .utf8)
-                        if let tailsWriterConfigString = tailsWriterConfigString{
-                            handler(tailsWriterConfigString)
-                        }
+                }
+
+                var pathOfTailsFile = "\(blobFolderPath)/"
+                pathOfTailsFile = URL(fileURLWithPath: pathOfTailsFile).standardized.path
+                print("TailsFile Path \(pathOfTailsFile)")
+                var tailsWriterConfig: [AnyHashable : Any] = [:]
+                tailsWriterConfig["base_dir"] = pathOfTailsFile
+                tailsWriterConfig["uri_pattern"] = ""
+
+                var tailsWriterConfigData: Data? = nil
+                do {
+                    tailsWriterConfigData = try? JSONSerialization.data(withJSONObject: tailsWriterConfig, options: .prettyPrinted)
+                }
+                var tailsWriterConfigString: String? = nil
+                if let tailsWriterConfigData = tailsWriterConfigData {
+                    tailsWriterConfigString = String(data: tailsWriterConfigData, encoding: .utf8)
+                    if let tailsWriterConfigString = tailsWriterConfigString{
+                        handler(tailsWriterConfigString)
                     }
-                } else {
-                    print("Issue with tails file.")
-                    handler("false")
                 }
             }
         }
