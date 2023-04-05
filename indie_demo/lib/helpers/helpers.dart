@@ -1,3 +1,5 @@
+import 'package:AriesFlutterMobileAgent/Storage/Models/ConnectionModel/connectiondata.dart';
+
 class ScreenArguments {
   final String url;
 
@@ -10,7 +12,14 @@ class ConnectionDetailArguments {
   ConnectionDetailArguments(this.connection);
 }
 
+class ConnectionDetailArguments2{
+  final ConnectionData connection;
+
+  ConnectionDetailArguments2(this.connection);
+}
+
 const MediatorAgentUrl = 'http://develop.indy-agent.prove.api.ledgerleopard.com';
+//const MediatorAgentUrl = 'http://test.indy-agent.prove.api.ledgerleopard.com';
 
 //const MediatorAgentUrl = 'http://192.168.88.95:3000';
 

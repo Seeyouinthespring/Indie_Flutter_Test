@@ -16,7 +16,7 @@ class CredentialDialog extends StatefulWidget {
 }
 
 class _CredentialDialogState extends State<CredentialDialog> {
-  List<dynamic> fields = [];
+  Map<String, dynamic> fields = {};
   List<dynamic> filledFields = [];
   List<dynamic> field = [];
 
@@ -34,6 +34,10 @@ class _CredentialDialogState extends State<CredentialDialog> {
 
   Future submitSchema() async {
     try {
+
+
+      print('FIELDS => $fields');
+
       for (int i = 0; i < fields.length; i++) {
         Map data = {
           'name': fields[i],
@@ -42,12 +46,21 @@ class _CredentialDialogState extends State<CredentialDialog> {
         };
         filledFields.add(jsonEncode(data));
       }
+
+
+      print('CONNECTION => ${widget.connection['verkey']}');
+
+      print('CREDENTIAL => ${widget.credential}');
+
+      print('FILED FIELDS => $filledFields');
+
       await AriesFlutterMobileAgent.sendCredentialProposal(
         widget.connection['verkey'],
         filledFields,
         widget.credential['schema']['schemaLedgerId'],
         widget.credential['credentialDefinitionId'].replaceAll(' ', '_'),
-        widget.credential['issuerDid'],
+        'Something'
+        //widget.credential['issuerDid'],
       );
     } catch (exception) {
       throw exception;
@@ -56,10 +69,20 @@ class _CredentialDialogState extends State<CredentialDialog> {
 
   @override
   Widget build(BuildContext context) {
-    var fieldsList = widget.credential['schema']['attributes'];
+    var fieldsList = widget.credential['attrs'];
+
+
+    print('fieldsList => ${fieldsList}');
+
+    print('attrs => ${widget.credential['attrs']}');
+
+//    var fieldsList = widget.credential['schema']['attributes'];
     setState(() {
       fields = fieldsList;
     });
+
+
+    print('CREDENTIAL => ${widget.credential}');
     return Dialog(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(Constants.padding),

@@ -436,6 +436,18 @@ class DBServices {
     }
   }
 
+  static Future<PresentationData> getPresentationDataById(String id) async {
+    try {
+      List<PresentationData> list = await getAllPresentations();
+      return list.firstWhere((element) {
+        print('^^^ ${id} == ${element.presentationId}');
+        return element.presentationId == id;
+      });
+    } catch (exception) {
+      throw exception;
+    }
+  }
+
   static Future<bool> storePresentation(
       PresentationData presentationData) async {
     try {

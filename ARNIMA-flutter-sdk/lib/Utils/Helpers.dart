@@ -95,7 +95,12 @@ dynamic packMessage(
     var packedBufferMessage;
     var message;
 
+    print('Start timer (stopwatch1)');
+    Stopwatch stopwatch1 = new Stopwatch()..start();
+
     if (Platform.isIOS) {
+      print('MESSAGE TO PACK => ${jsonEncode(outboundMessage)}');
+
       packedBufferMessage = await channel.invokeMethod('packMessage', <String, dynamic>{
         'configJson': configJson,
         'credentialsJson': credentialsJson,
@@ -117,11 +122,19 @@ dynamic packMessage(
       var outboundPackedMessage = utf8.decode(packedBufferMessage?.cast<int>());
       message = outboundPackedMessage;
     }
+    print('Default packing executed in ${stopwatch1.elapsed.inSeconds}');
+    stopwatch1.stop();
+    print('Stop timer (stopwatch1)');
+
+
+
+
+    print('Start timer (stopwatch2)');
+    Stopwatch stopwatch2 = new Stopwatch()..start();
 
     var forwardBufferMessage;
-
     if (keys.routingKeys != null && keys.routingKeys.isNotEmpty && outboundMessage['@type'] != MessageType.KeylistUpdateMessage) {
-      print('WE ARE GOING TO OD FORWARD');
+      print('WE ARE EXECUTING FORWARD MESSAGE');
       for (var routingKey in keys.routingKeys) {
 
         Object forwardMessage = createForwardMessage(keys.recipientKeys[0], message);
@@ -134,6 +147,9 @@ dynamic packMessage(
             'recipientKeys': [routingKey],
             'senderVk': keys.senderVk,
           });
+          print('Forward packing executed in ${stopwatch2.elapsed.inSeconds}');
+          stopwatch2.stop();
+          print('Stop timer (stopwatch2)');
           return message = forwardBufferMessage;
         } else {
           forwardBufferMessage = await channel.invokeMethod('packMessage', <String, dynamic>{

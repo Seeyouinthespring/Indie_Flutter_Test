@@ -235,31 +235,46 @@ public class SwiftAriesFlutterMobileAgentPlugin: NSObject, FlutterPlugin {
     private func getCredDef(submitterDid:String,credId: String,handler:@escaping(_ result: String)->()){
         let PROTOCOL_VERSION = 2
         let DEFAULT_POOL_NAME = "pool"
+        print("1")
         IndyPool.setProtocolVersion(PROTOCOL_VERSION as NSNumber) { (error) in
             if (error! as NSError).code > 1 {
+            print("2")
                 handler(error!.localizedDescription)
             }else{
                 IndyPool.openLedger(withName: DEFAULT_POOL_NAME, poolConfig: nil) { (error, IndyHadler) in
                     if ((error! as NSError).code > 1) {
+                    print("3")
                         handler(error!.localizedDescription)
                     } else {
                         IndyLedger.buildGetCredDefRequest(withSubmitterDid: submitterDid, id: credId) { (errorBGCR, requestJSON) in
                             if ((errorBGCR! as NSError).code > 1) {
+                            print("4")
                                 handler(errorBGCR!.localizedDescription)
                             } else {
                                 IndyLedger.submitRequest(requestJSON, poolHandle: IndyHadler) { (errorSR, requestResultJSON) in
                                     if ((errorSR! as NSError).code > 1) {
+                                    print("5")
                                         handler(errorSR!.localizedDescription)
                                     } else {
                                         IndyLedger.parseGetCredDefResponse(requestResultJSON) { (errorPGC, credDefId, credDefJson) in
+                                            print("6.1 ===> \(requestResultJSON)")
+                                            print("6.2 ===> \(credDefId)")
+                                            print("6.3 ===> \(credDefJson)")
+                                            print("6.4 ===> \(errorPGC)")
+
                                             if ((errorPGC! as NSError).code > 1) {
+                                            print("6")
                                                 handler(errorPGC!.localizedDescription)
                                             } else {
+                                            print("7")
                                                 IndyPool.closeLedger(withHandle: IndyHadler) { (error) in
                                                     if ((error! as NSError).code > 1) {
+                                                    print("8")
                                                         handler(error!.localizedDescription)
                                                     } else {
+                                                    print("9")
                                                         if let credDefJson = credDefJson{
+                                                        print("10")
                                                             handler(credDefJson)
                                                             
                                                         }
@@ -760,7 +775,8 @@ class PresentProofService {
                                     if result != "false" {
                                         presentProofHandler(result)
                                     } else {
-                                        presentProofHandler(FlutterError(code: "212", message: "Requested predicate/attribute not found.", details: nil))
+                                        presentProofHandler(result)
+                                        //presentProofHandler(FlutterError(code: "212", message: "Requested predicate/attribute not found.", details: nil))
                                     }
                                 }
                             }
@@ -1568,7 +1584,9 @@ class PresentProofService {
                 let blobFolderPath = documentsDirectory + "/.indy_client/blobs/" + folderName
                 let blobFilePath = blobFolderPath + "/" + fileName
 
+                print("DOWNLOADING DOCUMENT")
                 var downloadUrlString = URL.init(string: "https://develop.prove.api.ledgerleopard.com/\(folderName)/\(fileName)")
+                //var downloadUrlString = URL.init(string: "https://test.prove.api.ledgerleopard.com/\(folderName)/\(fileName)")
                 var downloadUrl: Data? = nil
 
                 do {

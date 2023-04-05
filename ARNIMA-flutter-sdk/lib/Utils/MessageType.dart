@@ -14,8 +14,8 @@ class MessageType {
   //     "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward";
   static const String Ack =
       "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/notification/1.0/ack'";
-  static const String ProposeCredential =
-      "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/propose-credential";
+  // static const String ProposeCredential =
+  //     "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/propose-credential";
   // static const String OfferCredential =
   //     "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/offer-credential";
   // static const String RequestCredential =
@@ -38,18 +38,21 @@ class MessageType {
   // static const String CredentialPreview =
   //     "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview";
 
+  static const String ProblemReport = "https://didcomm.org/report-problem/1.0/problem-report";
 
   static const String RequestPresentation = "https://didcomm.org/present-proof/1.0/request-presentation";
   static const String Presentation = "https://didcomm.org/present-proof/1.0/presentation";
   static const String PresentationAck = "https://didcomm.org/present-proof/1.0/ack";
   static const String ProposePresentation = "https://didcomm.org/present-proof/1.0/propose-presentation";
-  static const String CredentialPreview = "https://didcomm.org/present-proof/1.0/presentation-preview";
 
+  static const String CredentialPreview = "https://didcomm.org/issue-credential/1.0/credential-preview";
   static const String CredentialAck = "https://didcomm.org/issue-credential/1.0/ack";
   static const String IssueCredential = "https://didcomm.org/issue-credential/1.0/issue-credential";
-  static const String ProblemReport = "https://didcomm.org/report-problem/1.0/problem-report";
   static const String RequestCredential = "https://didcomm.org/issue-credential/1.0/request-credential";
   static const String OfferCredential = "https://didcomm.org/issue-credential/1.0/offer-credential";
+  static const String ProposeCredential = "https://didcomm.org/issue-credential/1.0/propose-credential";
+
+
   static const String MediateRequestMessage = "https://didcomm.org/coordinate-mediation/1.0/mediate-request";
   static const String KeylistUpdateMessage = "https://didcomm.org/coordinate-mediation/1.0/keylist-update";
   static const String ForwardMessage = "https://didcomm.org/routing/1.0/forward";

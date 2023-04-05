@@ -14,23 +14,24 @@ credentialPreviewMessage(attributes) {
 }
 
 credentialProposalMessage(
-  String credentialProposal,
-  String schemaId,
-  String credDefId,
-  String issuerDid,
-) {
+  dynamic credentialProposal,
+    String schemaId,
+    String credDefId,
+    String issuerDid,
+    String comment,
+    ) {
   var schema = schemaId.split(':');
   return {
     '@type': MessageType.ProposeCredential,
     '@id': Uuid().v4(),
-    'comment': '',
+    'comment': comment,
     'credential_proposal': credentialProposal,
-    'schema_issuer_did': schema[0],
+    //'schema_issuer_did': schema[0],
     'schema_id': schemaId,
-    'schema_name': schema[2],
-    'schema_version': schema[3],
-    'cred_def_id': credDefId,
-    'issuer_did': issuerDid,
+    //'schema_name': schema[2],
+    //'schema_version': schema[3],
+    //'cred_def_id': credDefId,
+    //'issuer_did': issuerDid,
   };
 }
 

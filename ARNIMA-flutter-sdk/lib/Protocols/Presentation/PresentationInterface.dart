@@ -11,6 +11,7 @@ class Presentation {
   String state;
   String createdAt;
   String updatedAt;
+  bool isVerified;
 
   Presentation({
     this.connectionId,
@@ -21,6 +22,7 @@ class Presentation {
     this.state,
     this.createdAt,
     this.updatedAt,
+    this.isVerified = false,
   });
 
   Presentation.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class Presentation {
     state = json['state'];
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
+    this.isVerified = json['isVerified'];
   }
 
   Map<String, dynamic> toJson() {
@@ -44,6 +47,7 @@ class Presentation {
     data['state'] = this.state;
     data['createdAt'] = this.createdAt;
     data['updatedAt'] = this.updatedAt;
+    data['isVerified'] = this.isVerified;
     return data;
   }
 }

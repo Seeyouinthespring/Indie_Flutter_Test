@@ -351,4 +351,9 @@ class ConnectionService {
       throw exception;
     }
   }
+
+  static Future<Connection> getConnection(String connectionId) async {
+    ConnectionData connectionDB = await DBServices.getConnection(connectionId);
+    return Connection.fromJson(jsonDecode(connectionDB.connection));
+  }
 }

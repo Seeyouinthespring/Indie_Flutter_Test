@@ -158,6 +158,9 @@ class _CustomDialogBoxState extends State<CustomDialogBox> {
                                 FlatButton(
                                   color: Colors.blue,
                                   onPressed: () async {
+
+                                    print('ACCEPT CREDENTIAL CALLED');
+
                                     Navigator.of(context).pop();
                                     await acceptCredential(widget.message);
                                   },

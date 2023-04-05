@@ -9,7 +9,11 @@ enum PresentationState {
   STATE_PRESENTATION_RECEIVED,
   STATE_VERIFIED,
   STATE_PRESENTATION_ACKED,
-  STATE_PROPOSAL_SENT
+  STATE_PROPOSAL_SENT,
+  STATE_PRESENTATION_DONE,
+  STATE_PRESENTATION_ERROR,
+  STATE_PRESENTATION_DECLINED,
+  STATE_PRESENTATION_TIMEOUT_EXPIRED
 }
 
 extension PresentationStateExtension on PresentationState {
@@ -29,6 +33,14 @@ extension PresentationStateExtension on PresentationState {
         return "STATE_PRESENTATION_ACKED";
       case PresentationState.STATE_PROPOSAL_SENT:
         return "STATE_PROPOSAL_SENT";
+      case PresentationState.STATE_PRESENTATION_DONE:
+        return "STATE_PRESENTATION_DONE";
+      case PresentationState.STATE_PRESENTATION_ERROR:
+        return "STATE_PRESENTATION_ERROR";
+      case PresentationState.STATE_PRESENTATION_DECLINED:
+        return "STATE_PRESENTATION_DECLINED";
+      case PresentationState.STATE_PRESENTATION_TIMEOUT_EXPIRED:
+        return "STATE_PRESENTATION_TIMEOUT_EXPIRED";
       default:
         return null;
     }

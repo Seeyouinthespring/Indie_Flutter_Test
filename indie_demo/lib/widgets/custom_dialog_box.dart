@@ -57,6 +57,20 @@ class _CustomDialogBoxState extends State<CustomDialogBox> {
     }
   }
 
+  Future declineProof(message) async {
+    try {
+      progressIndicator.show();
+      await AriesFlutterMobileAgent.declineProof(
+        message.messageId,
+        message.messages,
+      );
+      progressIndicator.hide();
+    } catch (exception) {
+      progressIndicator.hide();
+      throw exception;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     progressIndicator = new ProgressDialog(context);
@@ -145,20 +159,25 @@ class _CustomDialogBoxState extends State<CustomDialogBox> {
                           ? Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                FlatButton(
-                                  color: Colors.grey,
+                                TextButton(
+                                  style: ButtonStyle(
+                                    backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                                  ),
                                   onPressed: () {
                                     Navigator.of(context).pop();
                                   },
                                   child: Text(
-                                    'cancel',
-                                    style: TextStyle(fontSize: 16),
+                                    'Cancel',
+                                    style: TextStyle(fontSize: 16, color: Colors.white),
                                   ),
                                 ),
-                                FlatButton(
-                                  color: Colors.blue,
+                                TextButton(
+                                  style: ButtonStyle(
+                                    backgroundColor: MaterialStateProperty.all<Color>(Colors.green),
+                                  ),
                                   onPressed: () async {
                                     Navigator.of(context).pop();
+                                    print('Message -> ${widget.message}');
                                     await acceptCredential(widget.message);
                                   },
                                   child: Text(
@@ -178,18 +197,24 @@ class _CustomDialogBoxState extends State<CustomDialogBox> {
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        FlatButton(
-                          color: Colors.grey,
-                          onPressed: () {
+                        TextButton(
+                          style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(Colors.red),
+                            //foregroundColor:
+                          ),
+                          onPressed: () async {
                             Navigator.of(context).pop();
+                            await declineProof(widget.message);
                           },
                           child: Text(
-                            'cancel',
+                            'decline',
                             style: TextStyle(fontSize: 16),
                           ),
                         ),
-                        FlatButton(
-                          color: Colors.blue,
+                        TextButton(
+                          style: ButtonStyle(
+                            backgroundColor: MaterialStateProperty.all<Color>(Colors.green),
+                          ),
                           onPressed: () async {
                             Navigator.of(context).pop();
                             await sendProof(widget.message);

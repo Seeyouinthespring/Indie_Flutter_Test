@@ -167,27 +167,29 @@ class AriesFlutterMobileAgent {
   }
 
   static Future sendCredentialProposal(
-    connectionId,
-    credentialProposal,
-    schemaId,
-    credDefId,
-    issuerDid,
+    String connectionId,
+    dynamic credentialProposal,
+    String schemaId,
+    String credDefId,
+    String comment,
+//    issuerDid,
   ) async {
     try {
       WalletData sdkDB = await DBServices.getWalletData();
-      var sendCredentialProposal =
-          await CredentialService.sendCredentialProposal(
+      var sendCredentialProposal = await CredentialService.sendCredentialProposal(
         sdkDB.walletConfig,
         sdkDB.walletCredentials,
-        connectionId,
         credentialProposal,
+        connectionId,
         schemaId,
         credDefId,
-        issuerDid,
+        sdkDB.publicDid,
+        comment,
+        // issuerDid,
       );
       return sendCredentialProposal;
     } catch (exception) {
-      print('Exception in send credential praposal = ' + exception);
+      print('Exception in send credential praposal = ${exception.toString()}');
       throw exception;
     }
   }
@@ -271,10 +273,24 @@ class AriesFlutterMobileAgent {
     }
   }
 
+  static Future declineProof(String messageId, dynamic message) async {
+    try {
+      InboundMessage inboundMessage = InboundMessage.fromJson(
+        jsonDecode(message),
+      );
+      bool response = await PresentationService.declineProofRequest(inboundMessage);
+      if (response) {
+        await DBServices.removeMessage(messageId);
+      }
+    } catch (exception) {
+      print("Exception in sendProof $exception");
+      throw exception;
+    }
+  }
+
   static Future removeMessage(String messageId) async {
     await DBServices.removeMessage(messageId);
   }
-
 
   static Future socketInit() async {
     String url = await DBServices.getServiceEndpoint();
@@ -377,10 +393,10 @@ class AriesFlutterMobileAgent {
                   //   requestPresentationType(user, message,
                   //       dbMessages: dbMessages, i: i);
                   //   break;
-                  case MessageType.PresentationAck:
-                    presentationAckType(user, message,
-                        dbMessages: dbMessages, i: i);
-                    break;
+                  // case MessageType.PresentationAck:
+                  //   presentationAckType(user, message,
+                  //       dbMessages: dbMessages, i: i);
+                  //   break;
                   default:
                     print('In Default Case, ${messageValues['@type']}');
                 }
@@ -498,12 +514,16 @@ class AriesFlutterMobileAgent {
     emitterAriesSdk.emit("SDKEvent", null, "You are now connected with ${connection.theirLabel}");
   }
 
-  static presentationAckType(WalletData user, Map<String, dynamic> message,
-      {List<MessageData> dbMessages = const [], int i = 0}) async {
+  static presentationAckType(Map<String, dynamic> message) async {
     try {
-      if (dbMessages.isNotEmpty)
-        await DBServices.removeMessage(dbMessages[i].messageId);
-
+      print(1);
+      await PresentationService.handlePresentationAck(
+        InboundMessage(
+          message: message['message'],
+          recipientVerkey: message['recipient_verkey'],
+          senderVerkey: message['sender_verkey'],
+        ),
+      );
 
       print('PresentationAckType is called');
 
@@ -542,10 +562,6 @@ class AriesFlutterMobileAgent {
 
   static offerCredentialType(String messageId, WalletData user, Map<String, dynamic> message,
       {List<MessageData> dbMessages = const [], int i = 0}) async {
-
-
-    print('!!!!!!!!!!!!!!!!!!! OfferCredential message handler method started to work');
-    
     var connection = await CredentialService.receiveCredential(
       messageId,
       user,
@@ -611,6 +627,7 @@ class AriesFlutterMobileAgent {
 
 
   static Future<void> executeMessageType(messageId, WalletData user, Map<String, dynamic> jsonMessage) async {
+    print('------> EXECUTING MESSAGE TYPE ${jsonDecode(jsonMessage['message'])['@type']}');
     switch (jsonDecode(jsonMessage['message'])['@type']) {
       case MessageType.ConnectionResponse:
         await connectionRsponseType(user, jsonMessage);
@@ -634,14 +651,18 @@ class AriesFlutterMobileAgent {
         await requestPresentationType(messageId, user, jsonMessage);
         break;
       case MessageType.PresentationAck:
-        await presentationAckType(user, jsonMessage);
+        print( 'PRESENTATION ACK MESSAGE : $jsonMessage');
+        await presentationAckType(jsonMessage);
         break;
       case MessageType.BatchMessage:
         print('this is ${MessageType.BatchMessage}. I dont know what to do');
         break;
       case MessageType.ProblemReport:
         print( 'HUSTON, WE VE GOT PROBLEM (REPORT) : $jsonMessage');
-        await removeMessage(jsonMessage["message"]["problem_items"][0]["~thread"]["thid"]);
+        print('1 -> ${jsonMessage["message"]}');
+        var a = jsonDecode(jsonMessage["message"]);
+        print('5 -> ${a["problem_items"][0]["~thread"]["thid"]}');
+        await removeMessage(a["problem_items"][0]["~thread"]["thid"]);
         break;
       default:
         print('In Default Case, ${jsonDecode(jsonMessage['message'])['@type']}');

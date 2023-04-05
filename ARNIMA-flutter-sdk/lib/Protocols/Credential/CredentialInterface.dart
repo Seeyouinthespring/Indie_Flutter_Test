@@ -20,6 +20,7 @@ class Credential {
   String state;
   String createdAt;
   String updatedAt;
+  String title;
 
   Credential({
     this.connectionId,
@@ -39,6 +40,7 @@ class Credential {
     this.credential,
     this.createdAt,
     this.updatedAt,
+    this.title
   });
 
   Credential.fromJson(Map<String, dynamic> json) {
@@ -59,6 +61,7 @@ class Credential {
     state = json['state'];
     createdAt = json['createdAt'];
     updatedAt = json['updatedAt'];
+    title = json['title'];
   }
 
   Map<String, dynamic> toJson() {
@@ -79,6 +82,7 @@ class Credential {
     data['state'] = this.state;
     data['createdAt'] = this.createdAt;
     data['updatedAt'] = this.updatedAt;
+    data['title'] = this.title;
     return data;
   }
 }

@@ -95,8 +95,11 @@ class _ConnectMediatorScreenState extends State<ConnectMediatorScreen> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          RaisedButton(
-            color: Colors.green,
+          TextButton(
+            style: TextButton.styleFrom(
+                backgroundColor: Colors.green
+            ),
+            //color: Colors.green,
             onPressed: () async {
               await aaa();
             },
@@ -115,8 +118,11 @@ class _ConnectMediatorScreenState extends State<ConnectMediatorScreen> {
                 vertical: 10,
               ),
               height: 40,
-              child: RaisedButton(
-                color: Colors.blue,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                    backgroundColor: Colors.blue
+                ),
+                //color: Colors.blue,
                 onPressed: () async {
                   await connectWithMediator();
                 },

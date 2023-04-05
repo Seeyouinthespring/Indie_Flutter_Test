@@ -21,6 +21,7 @@ import '../Connection/ConnectionInterface.dart';
 const MethodChannel channel = const MethodChannel('AriesFlutterMobileAgent');
 
 class CredentialService {
+
   static Future<bool> sendCredentialProposal(
     String configJson,
     String credentialsJson,
@@ -29,18 +30,18 @@ class CredentialService {
     String schemaId,
     String credDefId,
     String issuerDid,
+    String comment,
   ) async {
     try {
       ConnectionData connection = await DBServices.getConnection(connectionId);
-
-      Connection connectionValues =
-          Connection.fromJson(jsonDecode(connection.connection));
+      Connection connectionValues = Connection.fromJson(jsonDecode(connection.connection));
 
       var credentialProposalMsg = credentialProposalMessage(
         credentialProposal,
         schemaId,
         credDefId,
         issuerDid,
+        comment,
       );
 
       Credential issuecredential = Credential(
@@ -54,16 +55,14 @@ class CredentialService {
       );
 
       if (credentialProposalMsg != null) {
+
         Keys keys = getKeys(connectionValues);
-
-        var outboundPackMessage =
-            await packMessage(configJson, credentialsJson, credentialProposalMsg, keys);
-
-
-        await outboundAgentMessagePost(
+        var outboundPackMessage = await packMessage(configJson, credentialsJson, credentialProposalMsg, keys);
+        Response a = await outboundAgentMessagePost(
           keys.endpoint,
           outboundPackMessage,
         );
+
         await DBServices.storeIssuecredential(
           CredentialData(
             connectionId: connectionValues.verkey,
@@ -91,11 +90,10 @@ class CredentialService {
       ConnectionData connection = await DBServices.getConnection(inboundMessage.recipientVerkey);
       Connection connectionValues = Connection.fromJson(jsonDecode(connection.connection));
 
-
       var message = inboundMessage.message;
       var offersAttach = jsonDecode(jsonEncode(message['offers~attach']));
-      var credOfferJson = await jsonDecode(decodeBase64(offersAttach[0]['data']['base64']));
 
+      var credOfferJson = await jsonDecode(decodeBase64(offersAttach[0]['data']['base64']));
       var credDefJson = await channel.invokeMethod(
         'getCredDef',
         <String, dynamic>{
@@ -115,8 +113,8 @@ class CredentialService {
           'masterSecretId': await DBServices.getMasterSecretId()
         },
       );
-      var thread = jsonDecode(jsonEncode(message['~thread']));
 
+      var thread = jsonDecode(jsonEncode(message['~thread']));
       String threadId;
       if (thread == null) {
         threadId = message['@id'];
@@ -138,6 +136,7 @@ class CredentialService {
         rawCredential: jsonEncode(
           message['credential_preview'],
         ),
+        title: message['comment']
       );
 
       if (thread != null) {
@@ -153,7 +152,6 @@ class CredentialService {
       );
 
       Keys keys = getKeys(connectionValues);
-
       var outboundPackMessage = await packMessage(
         sdkDB.walletConfig,
         sdkDB.walletCredentials,

@@ -129,8 +129,10 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
                 vertical: 10,
               ),
               height: 50,
-              child: RaisedButton(
-                color: Colors.blue,
+              child: TextButton(
+                style: ButtonStyle(
+                  foregroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                ),
                 onPressed: () async {
                   if (walletNameController.text != '' &&
                       walletKeyController.text != '') {
@@ -140,7 +142,7 @@ class _CreateWalletScreenState extends State<CreateWalletScreen> {
                 child: Text(
                   'Create Wallet and Did',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Colors.blue,
                     fontSize: 18,
                   ),
                 ),

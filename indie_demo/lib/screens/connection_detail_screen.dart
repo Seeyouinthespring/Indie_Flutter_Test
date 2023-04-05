@@ -56,8 +56,7 @@ class _ConnectionDetailScreenState extends State<ConnectionDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    //final ConnectionDetailArguments data = ModalRoute.of(context).settings.arguments;
-    //final connection = data.connection;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('${widget.argument.connection['theirLabel']}'),
@@ -81,24 +80,35 @@ class _ConnectionDetailScreenState extends State<ConnectionDetailScreen> {
                   }
                   return
 
-                    Container(
-                      margin: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(border: Border.all(color: Colors.black)),
-                      child: Text("${jsonDecode(pres.presentationRequest)['name']} - ${pres.state}"),
-                    );
-                    // FlatButton(
-                    //   onPressed: () => showDialog(
-                    //     context: context,
-                    //     builder: (BuildContext context) {
-                    //       return CredentialDialog(
-                    //         connection: widget.argument.connection,
-                    //         credential: credential,
-                    //       );
-                    //     },
-                    //   ),
-                    //   height: 30,
-                    //   child: Text('$credName', style: TextStyle(color: Colors.white),), color: Colors.blue,
-                    // );
+                  Container(
+                    margin: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(border: Border.all(color: Colors.black)),
+                    child: Column(
+                      children: [
+                        Text("${jsonDecode(pres.presentationRequest)['name']} - ${pres.state}"),
+                        SizedBox(height: 20,),
+                        TextButton(
+                          onPressed: () => showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return CredentialDialog(
+                                connection: widget.argument.connection,
+                                credential: pres,
+                              );
+                            },
+                          ),
+                          style: TextButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                            minimumSize: Size(150, 40),
+                          ),
+                          // height: 40,
+                          // minWidth: 150,
+                          child: Text('PROPOSAL', style: TextStyle(color: Colors.white),),
+                          //color: Colors.blue,
+                        )
+                      ],
+                    ),
+                  );
                 },
               ),
             )

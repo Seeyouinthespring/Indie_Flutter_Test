@@ -3,12 +3,16 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io' as io;
 
+import 'package:AriesFlutterMobileAgent/NetworkServices/Network.dart';
+import 'package:AriesFlutterMobileAgent/Protocols/Credential/CredentialMessages.dart';
+import 'package:AriesFlutterMobileAgent/Storage/DBModels.dart';
 import 'package:barcode_scan/barcode_scan.dart';
 import 'package:flutter/material.dart';
 
 import 'package:AriesFlutterMobileAgent/AriesAgent.dart';
 import 'package:indie_demo/helpers/helpers.dart';
 import 'package:indie_demo/screens/qrcode_screen.dart';
+import 'package:indie_demo/widgets/credential_dialog.dart';
 import 'package:indie_demo/widgets/custom_dialog_box.dart';
 import 'package:progress_dialog/progress_dialog.dart';
 
@@ -26,8 +30,9 @@ class _ConnectionScreenState extends State<ConnectionScreen>
   ProgressDialog progressIndicator;
   String label = "";
   String endPoint = "";
-  List<dynamic> connectionList = [];
+  List<ConnectionData> connectionList = [];
   List<dynamic> credentialList = [];
+  List<CredentialData> credentialsDB = [];
   List<dynamic> messageList = [];
   String title = "Home";
 
@@ -74,45 +79,47 @@ class _ConnectionScreenState extends State<ConnectionScreen>
     var message = await AriesFlutterMobileAgent.pickupMessage();
     await progressIndicator.hide();
 
-    print('GOT MESSAGE => $message');
+    print('!!! GOT MESSAGE SUCCESSFULLY !!!');
 
   }
 
-  checkFile() async {
-    String path1 = 'file:///root/.indy_client/blobs/DBNiivhQomkYb9swE1pX1y_3_CL_1510_TAG1/42XnLCRYWRv8XBHMmjSsyUwLebwANRey3TmGywTicBg8';
-    String path2 = 'file:///root/.indy_client/blobs/DBNiivhQomkYb9swE1pX1y_3_CL_1510_TAG1/42XnLCRYWRv8XBHMmjSsyUwLebwANRey3TmGywTicBg8';
-    String dir1 = 'file:///root/.indy_client/blobs/DBNiivhQomkYb9swE1pX1y_3_CL_1510_TAG1';
-    String dir2 = 'file:///root/.indy_client/blobs';
-    String dir3 = 'file:///root/.indy_client';
-
-    print('path1 => ${io.File(path1).existsSync()}');
-    print('path2 => ${io.File(path2).existsSync()}');
-    print('dir1 => ${io.Directory(dir1).existsSync()}');
-    print('dir2 => ${io.Directory(dir2).existsSync()}');
-    print('dir3 => ${io.Directory(dir3).existsSync()}');
+  navigateToScanner(){
+    print('Navigate to Scanner called');
+    Navigator.of(context).pushNamed(Routes.mrzScanner, arguments: ConnectionDetailArguments2(connectionList[1]));
   }
 
   showAlertDialog(invitation) {
-    Widget confirm = FlatButton(
+    Widget confirm = TextButton(
       child: Text("CONFIRM"),
       onPressed: () {
         Navigator.pop(context);
         progressIndicator.show();
         acceptInvitation(invitation);
       },
-      color: Colors.blue,
-      shape: new RoundedRectangleBorder(
-        borderRadius: new BorderRadius.circular(30.0),
-      ),
-      minWidth: MediaQuery.of(context).size.width - 30,
+      style: TextButton.styleFrom(
+        backgroundColor: Colors.blue,
+        shape: new RoundedRectangleBorder(
+          borderRadius: new BorderRadius.circular(30.0),
+        ),
+        minimumSize: Size(
+            MediaQuery.of(context).size.width - 30, 50
+        )
+      )
     );
 
-    Widget cancel = FlatButton(
+    Widget cancel = TextButton(
       child: Text("CANCEL"),
       onPressed: Navigator.of(context, rootNavigator: true).pop,
-      textColor: Colors.blue,
-      color: Colors.white,
-      minWidth: MediaQuery.of(context).size.width - 30,
+      style: TextButton.styleFrom(
+        textStyle: TextStyle(color: Colors.blue),
+          backgroundColor: Colors.white,
+          shape: new RoundedRectangleBorder(
+            borderRadius: new BorderRadius.circular(30.0),
+          ),
+          minimumSize: Size(
+              MediaQuery.of(context).size.width - 30, 50
+          )
+      )
     );
 
     AlertDialog alert = AlertDialog(
@@ -178,8 +185,7 @@ class _ConnectionScreenState extends State<ConnectionScreen>
   }
 
   Future getConnections() async {
-    List<dynamic> connections =
-        await AriesFlutterMobileAgent.getAllConnections();
+    List<ConnectionData> connections = await AriesFlutterMobileAgent.getAllConnections();
     setState(() {
       connectionList = connections;
     });
@@ -199,10 +205,12 @@ class _ConnectionScreenState extends State<ConnectionScreen>
 
       progressIndicator.hide();
       setState(() {
+        credentialsDB = creds;
         credentialList = credentials;
       });
     } catch (exception) {
-      print("error in listallcred $exception");
+      print("error in list all creds $exception");
+      progressIndicator.hide();
       throw exception;
     }
   }
@@ -233,15 +241,8 @@ class _ConnectionScreenState extends State<ConnectionScreen>
   }
 
   void navigateToConnectionDetail(connection) {
-
     print('Connection screen. navigateToConnectionDetails called');
     Navigator.of(context).pushNamed(Routes.connectionDetail, arguments: ConnectionDetailArguments(connection));
-
-    // Navigator.pushNamed(
-    //   context,
-    //   ConnectionDetailScreen.routeName,
-    //   arguments: ConnectionDetailArguments(connection),
-    // );
   }
 
   @override
@@ -295,24 +296,33 @@ class _ConnectionScreenState extends State<ConnectionScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  RaisedButton(
+                  TextButton(
                     onPressed: createInvitation,
                     child: Text('create Invitation'),
                   ),
-                  RaisedButton(
+                  TextButton(
                     onPressed: addNewConnection,
                     child: Text('--> Add new Connection'),
-                    color: Colors.blue[200],
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.blue[200]
+                    ),
+                    //color: Colors.blue[200],
                   ),
-                  RaisedButton(
-                    onPressed: checkFile,
-                    child: Text('CHECK FILE AND DIRECTORY '),
-                    color: Colors.blue[200],
-                  ),
-                  RaisedButton(
+                  TextButton(
                     onPressed: getMessage,
                     child: Text('GET MESSAGE '),
-                    color: Colors.blue[200],
+                    style: TextButton.styleFrom(
+                        backgroundColor: Colors.blue[200]
+                    ),
+                    //color: Colors.blue[200],
+                  ),
+                  TextButton(
+                    onPressed: navigateToScanner,
+                    child: Text('SCAN MRZ'),
+                    style: TextButton.styleFrom(
+                        backgroundColor: Colors.blue[200]
+                    ),
+                    //color: Colors.blue[200],
                   ),
                   Expanded(
                     child: ListView.builder(
@@ -380,6 +390,7 @@ class _ConnectionScreenState extends State<ConnectionScreen>
                           };
                           attrsData.add(data);
                         });
+                        var title = jsonDecode(credentialsDB.firstWhere((element) => element.credentialId == credentialList[index]['referent']).issuecredential)['title'];
                         return Card(
                           shadowColor: Colors.grey,
                           child: ListTile(
@@ -391,7 +402,7 @@ class _ConnectionScreenState extends State<ConnectionScreen>
                                 color: Colors.amber,
                               ),
                             ),
-                            title: Text(credentialList[index]['cred_def_id'].split(':')[4]),
+                            title: Text(title ?? credentialList[index]['cred_def_id'].split(':')[4]),
                             contentPadding: EdgeInsets.all(7),
                             trailing: GestureDetector(
                               onTap: () => showDialog(
@@ -532,7 +543,7 @@ class _ConnectionScreenState extends State<ConnectionScreen>
                                   builder: (BuildContext context) {
                                     return CustomDialogBox(
                                       title: 'Proof',
-                                      action: "Send",
+                                      action: "Accept",
                                       attributes: attrsData,
                                       message: messageList[index],
                                       isCredential: false,
@@ -546,7 +557,7 @@ class _ConnectionScreenState extends State<ConnectionScreen>
                                   alignment: Alignment.center,
                                   color: Colors.blue,
                                   child: Text(
-                                    'Send',
+                                    'View',
                                     style: TextStyle(
                                       color: Colors.white,
                                       backgroundColor: Colors.blue,
